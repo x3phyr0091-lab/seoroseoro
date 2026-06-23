@@ -181,17 +181,25 @@
   .save-row { display: flex; gap: 10px; margin-top: 8px; }
   .save-row .btn-gold { margin-top: 0; }
   .detail-photo { width: 100%; max-height: 360px; object-fit: cover; display: block; }
-  .detail-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--text-dim); margin-bottom: 14px; }
+  .detail-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--text-dim); margin-bottom: 12px; }
   .detail-meta .date { font-family: var(--serif); color: #8a6b2e; }
-  .map-link { display:inline-block; font-size:11.5px; padding:2px 9px; border-radius:11px; background:rgba(111,159,224,.16); color:var(--blue); text-decoration:none; font-family:var(--sans); }
+  .detail-moods { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px; }
+  .detail-moods:empty { display: none; }
+  .detail-moods .mood-chip { background: rgba(232,138,180,.14); color: #9a5346; border-radius: 999px; padding: 3px 11px; font-size: 12.5px; white-space: nowrap; }
+  .map-link { display:inline-block; font-size:11.5px; padding:2px 9px; border-radius:11px; background:rgba(111,159,224,.16); color:var(--blue); text-decoration:none; font-family:var(--sans); white-space:nowrap; }
   .map-link:hover { background:rgba(111,159,224,.3); }
   .detail-content { font-size: 15px; line-height: 1.85; color: var(--text); white-space: pre-wrap; word-break: break-word; }
-  .detail-foot { margin-top: 22px; padding-top: 16px; border-top: 1px dashed var(--card-edge); display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--text-dim); }
-  .del-link { background: none; border: none; cursor: pointer; color: var(--rose); font-size: 13px; font-family: var(--sans); padding: 6px 4px; }
+  .detail-foot { margin-top: 22px; padding-top: 16px; border-top: 1px dashed var(--card-edge); display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--text-dim); }
+  .detail-foot > span:first-child { min-width: 0; }
+  .del-link { background: none; border: none; cursor: pointer; color: var(--rose); font-size: 13px; font-family: var(--sans); padding: 6px 4px; white-space: nowrap; }
   .del-link:hover { text-decoration: underline; }
-  .detail-acts { display: flex; align-items: center; gap: 10px; }
-  .edit-link { background: none; border: 1px solid var(--card-edge); cursor: pointer; color: var(--ink); font-size: 13px; font-family: var(--sans); padding: 5px 14px; border-radius: 20px; }
+  .detail-acts { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .edit-link { background: none; border: 1px solid var(--card-edge); cursor: pointer; color: var(--ink); font-size: 13px; font-family: var(--sans); padding: 5px 14px; border-radius: 20px; white-space: nowrap; }
   .edit-link:hover { background: rgba(232,138,180,.16); border-color: var(--gold); }
+  @media (max-width: 480px) {
+    .detail-foot { flex-direction: column; align-items: stretch; gap: 14px; }
+    .detail-acts { width: 100%; justify-content: space-between; }
+  }
   .field-note { font-size: 11.5px; color: #a8997f; margin-top: 5px; }
 
   .toast { position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--ink-2); color: var(--cream); border: 1px solid rgba(232,138,180,.3); padding: 12px 22px; border-radius: 999px; font-size: 13.5px; z-index: 100; opacity: 0; transition: all .3s; box-shadow: var(--shadow); pointer-events: none; }
@@ -602,6 +610,7 @@
     <div class="modal-head"><h2 id="detailTitle"></h2><button class="x" id="detailClose" aria-label="닫기">×</button></div>
     <div class="modal-body">
       <div class="detail-meta" id="detailMeta"></div>
+      <div class="detail-moods" id="detailMoods"></div>
       <div class="detail-content" id="detailContent"></div>
       <div class="detail-foot"><span id="detailFoot"></span><span class="detail-acts"><button class="edit-link" id="detailEdit">수정</button><button class="del-link" id="detailDel">이 추억 지우기</button></span></div>
       <div class="comments" id="commentSection">
@@ -967,7 +976,7 @@ function compressImage(file, targetBytes) {
           canvas.getContext("2d").drawImage(img, 0, 0, w, h);
           return canvas.toDataURL("image/jpeg", quality);
         }
-        var tries = [[1100, 0.72], [950, 0.62], [820, 0.55], [700, 0.5], [600, 0.45], [500, 0.42]];
+        var tries = [[1100, 0.72], [950, 0.62], [820, 0.55], [700, 0.5], [600, 0.45], [500, 0.42], [440, 0.4], [380, 0.37], [340, 0.35]];
         var out = render(1100, 0.72);
         for (var k = 0; k < tries.length && out.length * 0.75 > targetBytes; k++) {
           out = render(tries[k][0], tries[k][1]);
@@ -986,7 +995,7 @@ function handleFiles(files) {
   $("photoDrop").textContent = "사진 정리하는 중…";
   // 남은 용량을 새로 더하는 장수로 나눠 한 장당 목표 크기를 정함(여러 장일수록 작게).
   var per = Math.floor((TOTAL_PHOTO_LIMIT - curPhotoBytes()) / list.length);
-  per = Math.max(170000, Math.min(per, (draftPhotos.length + list.length) >= 4 ? 250000 : 800000));
+  per = Math.max(115000, Math.min(per, (draftPhotos.length + list.length) >= 4 ? 300000 : 800000));
   var chain = Promise.resolve(), skipped = 0;
   list.forEach(function (f) {
     chain = chain.then(function () {
@@ -1057,8 +1066,8 @@ function openDetail(m) {
   $("detailTitle").innerHTML = stripTags(m.title).trim() ? m.title : "(제목 없음)";
   var meta = '<span class="date">' + esc(fmtDate(m.date)) + "</span>";
   if (m.place) meta += '<span>· ' + esc(m.place) + '</span><a class="map-link" href="https://map.naver.com/p/search/' + encodeURIComponent(m.place) + '" target="_blank" rel="noopener">📍 네이버</a><a class="map-link" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(m.place) + '" target="_blank" rel="noopener">구글</a>';
-  meta += moodsOf(m).map(function (t) { var mo = MOODS.filter(function (x) { return x.t === t; })[0]; return mo ? '<span class="mood-chip">' + mo.e + " " + esc(t) + "</span>" : ""; }).join("");
   $("detailMeta").innerHTML = meta;
+  $("detailMoods").innerHTML = moodsOf(m).map(function (t) { var mo = MOODS.filter(function (x) { return x.t === t; })[0]; return mo ? '<span class="mood-chip">' + mo.e + " " + esc(t) + "</span>" : ""; }).join("");
   Array.prototype.forEach.call($("detailMeta").querySelectorAll(".map-link"), function (a) {
     a.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); window.open(a.href, "_blank", "noopener"); });
   });
