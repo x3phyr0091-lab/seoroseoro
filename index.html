@@ -324,6 +324,9 @@
   .plan-body { flex:1; min-width:0; }
   .plan-title { font-size:15px; color:var(--text); font-weight:600; word-break:break-word; line-height:1.4; }
   .plan-memo { font-size:13px; color:var(--text-dim); margin-top:5px; white-space:pre-wrap; word-break:break-word; line-height:1.5; }
+  .plan-acts { display:flex; flex-direction:column; gap:7px; flex-shrink:0; align-items:center; }
+  .plan-edit { background:none; border:none; cursor:pointer; color:var(--text-dim); font-size:15px; padding:0 2px; opacity:.55; line-height:1; }
+  .plan-edit:hover { opacity:1; color:var(--gold); }
   .plan-del { flex-shrink:0; background:none; border:none; cursor:pointer; color:var(--text-dim); font-size:19px; padding:0 2px; opacity:.5; line-height:1; }
   .plan-del:hover { opacity:1; color:var(--rose); }
   .plan-empty { text-align:center; color:var(--text-dim); font-size:14px; padding:30px 0; line-height:1.7; }
@@ -952,6 +955,34 @@ function sortMems() {
 function stripTags(html) { var d = document.createElement("div"); d.innerHTML = html || ""; return d.textContent || ""; }
 function photosOf(m) { if (m.photos && m.photos.length) return m.photos; if (m.photo) return [m.photo]; return []; }
 function moodsOf(m) { if (m.moods && m.moods.length) return m.moods; if (m.mood) return [m.mood]; return []; }
+const PHOTO_COL = "photos";
+function coverOf(m) { if (m.cover) return m.cover; if (m.photos && m.photos.length) return m.photos[0]; if (m.photo) return m.photo; return null; }
+function photoCountOf(m) { if (typeof m.photoCount === "number") return m.photoCount; if (m.photoIds && m.photoIds.length) return m.photoIds.length; if (m.photos && m.photos.length) return m.photos.length; if (m.photo) return 1; return 0; }
+async function loadPhotos(m) {
+  if (m.photoIds && m.photoIds.length) {
+    var out = [];
+    for (var i = 0; i < m.photoIds.length; i++) {
+      try { var s = await getDoc(doc(db, PHOTO_COL, m.photoIds[i])); if (s.exists()) { var dd = s.data(); if (dd && dd.data) out.push(dd.data); } } catch (e) {}
+    }
+    return out;
+  }
+  return photosOf(m);
+}
+function makeThumb(b64) {
+  return new Promise(function (resolve) {
+    var img = new Image();
+    img.onload = function () {
+      var maxDim = 420, w = img.width, h = img.height;
+      if (w > h && w > maxDim) { h = Math.round(h * maxDim / w); w = maxDim; }
+      else if (h >= w && h > maxDim) { w = Math.round(w * maxDim / h); h = maxDim; }
+      var c = document.createElement("canvas"); c.width = w; c.height = h;
+      c.getContext("2d").drawImage(img, 0, 0, w, h);
+      resolve(c.toDataURL("image/jpeg", 0.62));
+    };
+    img.onerror = function () { resolve(b64); };
+    img.src = b64;
+  });
+}
 function renderList() {
   sortMems();
   renderOnThisDay();
@@ -974,8 +1005,8 @@ function renderList() {
     var card = document.createElement("div");
     card.className = "card"; card.style.animationDelay = Math.min(i * 50, 400) + "ms";
     var moodHtml = moodsOf(m).map(function (t) { var mo = MOODS.filter(function (x) { return x.t === t; })[0]; return mo ? '<span class="mood-chip">' + mo.e + " " + esc(t) + "</span>" : ""; }).join("");
-    var photos = photosOf(m);
-    var photoHtml = photos.length ? '<div class="photo-wrap"><img class="photo" src="' + photos[0] + '" alt="" loading="lazy" />' + (photos.length > 1 ? '<span class="photo-count">📷 ' + photos.length + '</span>' : "") + "</div>" : "";
+    var cover = coverOf(m), pcnt = photoCountOf(m);
+    var photoHtml = cover ? '<div class="photo-wrap"><img class="photo" src="' + cover + '" alt="" loading="lazy" />' + (pcnt > 1 ? '<span class="photo-count">📷 ' + pcnt + '</span>' : "") + "</div>" : "";
     var favBtn = '<button class="fav-btn ' + (m.fav ? "" : "off") + '" data-fav="1">' + (m.fav ? "★" : "☆") + '</button>';
     var placeHtml = m.place ? '<span class="place">· ' + esc(m.place) + "</span>" : "";
     var titleHtml = stripTags(m.title).trim() ? m.title : "(제목 없음)";
@@ -1003,15 +1034,19 @@ function openAdd(editMem) {
     $("memPw").value = editMem.pw || "";
     $("memTitle").innerHTML = editMem.title || "";
     $("memContent").innerHTML = editMem.content || "";
-    draftPhotos = photosOf(editMem).slice();
     draftMoods = moodsOf(editMem).slice();
     draftAuthor = editMem.author || null;
+    draftPhotos = [];
+    renderPhotoGrid();
+    $("photoDrop").textContent = "사진 불러오는 중…";
+    loadPhotos(editMem).then(function (ps) { draftPhotos = ps; renderPhotoGrid(); $("photoDrop").textContent = dropLabel(); });
   } else {
     $("memDate").value = todayStr(); $("memPlace").value = ""; $("memPw").value = "";
     $("memTitle").innerHTML = ""; $("memContent").innerHTML = "";
     draftPhotos = []; draftMoods = []; draftAuthor = null;
+    renderPhotoGrid(); $("photoDrop").textContent = dropLabel();
   }
-  renderPhotoGrid(); $("photoDrop").textContent = dropLabel(); $("photoInput").value = "";
+  $("photoInput").value = "";
   if ($("charPalette")) $("charPalette").style.display = "none";
   buildMoodPicker();
   var auths = $("authorPicker").querySelectorAll(".author-pick");
@@ -1036,8 +1071,8 @@ function compressImage(file, targetBytes) {
           canvas.getContext("2d").drawImage(img, 0, 0, w, h);
           return canvas.toDataURL("image/jpeg", quality);
         }
-        var tries = [[1100, 0.72], [950, 0.62], [820, 0.55], [700, 0.5], [600, 0.45], [500, 0.42], [440, 0.4], [380, 0.37], [340, 0.35]];
-        var out = render(1100, 0.72);
+        var tries = [[1500, 0.8], [1300, 0.74], [1100, 0.68], [950, 0.6], [820, 0.54], [680, 0.48]];
+        var out = render(1600, 0.82);
         for (var k = 0; k < tries.length && out.length * 0.75 > targetBytes; k++) {
           out = render(tries[k][0], tries[k][1]);
         }
@@ -1053,21 +1088,15 @@ function handleFiles(files) {
   var list = Array.prototype.slice.call(files).filter(function (f) { return f && f.type && f.type.indexOf("image") === 0; });
   if (!list.length) return;
   $("photoDrop").textContent = "사진 정리하는 중…";
-  // 남은 용량을 새로 더하는 장수로 나눠 한 장당 목표 크기를 정함(여러 장일수록 작게).
-  var per = Math.floor((TOTAL_PHOTO_LIMIT - curPhotoBytes()) / list.length);
-  per = Math.max(115000, Math.min(per, (draftPhotos.length + list.length) >= 4 ? 300000 : 800000));
-  var chain = Promise.resolve(), skipped = 0;
+  var chain = Promise.resolve();
   list.forEach(function (f) {
     chain = chain.then(function () {
-      return compressImage(f, per).then(function (b64) {
-        if (curPhotoBytes() + b64.length * 0.75 > TOTAL_PHOTO_LIMIT) { skipped++; return; }
-        draftPhotos.push(b64);
-      });
+      return compressImage(f, 850000).then(function (b64) { draftPhotos.push(b64); });
     });
   });
   chain.then(function () {
     renderPhotoGrid(); $("photoDrop").textContent = dropLabel();
-    if (skipped) toast("용량이 가득 차서 " + skipped + "장은 담지 못했어요.");
+    if (draftPhotos.length > 40) toast("사진이 아주 많으면 저장·불러오기가 조금 느려질 수 있어요.");
   }).catch(function () { renderPhotoGrid(); $("photoDrop").textContent = dropLabel(); toast("일부 사진을 불러오지 못했어요."); });
 }
 function renderPhotoGrid() {
@@ -1091,12 +1120,23 @@ async function saveMemory() {
   var err = $("addErr");
   if (!titleText && !contentText) { err.textContent = "제목이나 이야기 중 하나는 적어주세요."; return; }
   err.textContent = "";
-  var fields = { date: date, title: title, content: content, place: place, moods: draftMoods.slice(), author: draftAuthor || settings.name1, photos: draftPhotos.slice(), pw: pw };
   $("saveBtn").disabled = true;
   var editing = editingId;
   $("saveBtn").textContent = editing ? "수정하는 중…" : "간직하는 중…";
   try {
+    // 사진을 각각 별도 문서로 저장 (추억 문서 용량 제한을 피해 장수 제한을 없앰)
+    var photoIds = [];
+    for (var i = 0; i < draftPhotos.length; i++) {
+      var pref = await addDoc(collection(db, PHOTO_COL), { data: draftPhotos[i], order: i, createdAt: Date.now() });
+      photoIds.push(pref.id);
+    }
+    var cover = draftPhotos.length ? await makeThumb(draftPhotos[0]) : null;
+    var fields = { date: date, title: title, content: content, place: place, moods: draftMoods.slice(), author: draftAuthor || settings.name1, cover: cover, photoIds: photoIds, photoCount: draftPhotos.length, photos: [], pw: pw };
     if (editing) {
+      var old = memories.filter(function (x) { return x.id === editing; })[0];
+      if (old && old.photoIds && old.photoIds.length) {
+        for (var j = 0; j < old.photoIds.length; j++) { try { await deleteDoc(doc(db, PHOTO_COL, old.photoIds[j])); } catch (e) {} }
+      }
       await updateDoc(doc(db, MEM_COL, editing), fields);
       closeAdd(); toast("추억을 수정했어요 ♥");
     } else {
@@ -1105,7 +1145,7 @@ async function saveMemory() {
       closeAdd(); toast("추억을 간직했어요 ♥");
     }
   } catch (e) {
-    err.textContent = "저장에 실패했어요. 사진 수를 줄이고 다시 시도해보세요.";
+    err.textContent = "저장에 실패했어요. 잠시 후 다시 시도해주세요.";
   } finally {
     $("saveBtn").textContent = editing ? "수정하기" : "간직하기"; $("saveBtn").disabled = false;
   }
@@ -1115,13 +1155,18 @@ async function saveMemory() {
 var detailCurrent = null; var commentAuthor = null;
 function openDetail(m) {
   detailCurrent = m;
-  var photos = photosOf(m);
   var gal = $("detailGallery");
-  if (photos.length) {
-    gal.innerHTML = "";
-    gal.className = "detail-gallery" + (photos.length === 1 ? " single" : "");
-    photos.forEach(function (src) { var im = document.createElement("img"); im.src = src; im.alt = ""; gal.appendChild(im); });
+  var cover = coverOf(m), cnt = photoCountOf(m);
+  if (cnt > 0) {
+    gal.className = "detail-gallery" + (cnt === 1 ? " single" : "");
+    gal.innerHTML = cover ? '<img src="' + cover + '" alt="" />' : "";
     gal.style.display = "flex";
+    loadPhotos(m).then(function (photos) {
+      if (detailCurrent !== m) return;
+      gal.innerHTML = "";
+      gal.className = "detail-gallery" + (photos.length === 1 ? " single" : "");
+      photos.forEach(function (src) { var im = document.createElement("img"); im.src = src; im.alt = ""; gal.appendChild(im); });
+    });
   } else { gal.style.display = "none"; gal.innerHTML = ""; }
   $("detailTitle").innerHTML = stripTags(m.title).trim() ? m.title : "(제목 없음)";
   var meta = '<span class="date">' + esc(fmtDate(m.date)) + "</span>";
@@ -1194,6 +1239,7 @@ function closeBucket() { $("bucketOverlay").classList.remove("active"); document
 var PLAN_COL = "plans";
 var planItems = [];
 var planUnsub = null;
+var editingPlanId = null;
 function subscribePlan() {
   if (planUnsub) return;
   planUnsub = onSnapshot(collection(db, PLAN_COL), function (snap) {
@@ -1226,7 +1272,7 @@ function planRow(p, past) {
   return '<div class="plan-item' + (past ? " past" : "") + '">' +
     '<div class="plan-when"><div class="d">' + esc(fmtPlanDate(p.date)) + '</div>' + (p.time ? '<div class="t">' + esc(fmtPlanRange(p.time, p.endTime)) + '</div>' : '') + '</div>' +
     '<div class="plan-body"><div class="plan-title">' + esc(p.title || "(제목 없음)") + '</div>' + (p.memo ? '<div class="plan-memo">' + esc(p.memo) + '</div>' : '') + '</div>' +
-    '<button class="plan-del" type="button" data-id="' + p.id + '" aria-label="삭제">×</button></div>';
+    '<div class="plan-acts"><button class="plan-edit" type="button" data-id="' + p.id + '" aria-label="수정">✎</button><button class="plan-del" type="button" data-id="' + p.id + '" aria-label="삭제">×</button></div></div>';
 }
 function renderPlan() {
   var wrap = $("planListWrap"); if (!wrap) return;
@@ -1240,6 +1286,9 @@ function renderPlan() {
   wrap.innerHTML = html;
   Array.prototype.forEach.call(wrap.querySelectorAll(".plan-del"), function (b) {
     b.onclick = function () { var id = b.getAttribute("data-id"); var it = planItems.filter(function (p) { return p.id === id; })[0]; if (it) delPlan(it); };
+  });
+  Array.prototype.forEach.call(wrap.querySelectorAll(".plan-edit"), function (b) {
+    b.onclick = function () { var id = b.getAttribute("data-id"); var it = planItems.filter(function (p) { return p.id === id; })[0]; if (it) editPlan(it); };
   });
 }
 function renderUpcomingPlan() {
@@ -1260,17 +1309,37 @@ async function addPlan() {
   if (!date) { toast("날짜를 골라주세요."); return; }
   if (!title) { toast("무엇을 할지 적어주세요."); return; }
   try {
-    await addDoc(collection(db, PLAN_COL), { date: date, time: ts, endTime: te, title: title, memo: memo, createdAt: Date.now() });
-    $("planDate").value = ""; $("planTimeStart").value = ""; $("planTimeEnd").value = ""; $("planTitle").value = ""; $("planMemo").value = "";
-  } catch (e) { toast("추가하지 못했어요."); }
+    if (editingPlanId) {
+      await updateDoc(doc(db, PLAN_COL, editingPlanId), { date: date, time: ts, endTime: te, title: title, memo: memo });
+      toast("일정을 수정했어요.");
+    } else {
+      await addDoc(collection(db, PLAN_COL), { date: date, time: ts, endTime: te, title: title, memo: memo, createdAt: Date.now() });
+    }
+    resetPlanForm();
+  } catch (e) { toast(editingPlanId ? "수정하지 못했어요." : "추가하지 못했어요."); }
+}
+function editPlan(it) {
+  editingPlanId = it.id;
+  $("planDate").value = it.date || "";
+  $("planTimeStart").value = it.time || "";
+  $("planTimeEnd").value = it.endTime || "";
+  $("planTitle").value = it.title || "";
+  $("planMemo").value = it.memo || "";
+  $("planAddBtn").textContent = "수정 완료";
+  var form = document.querySelector(".plan-form"); if (form) form.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function resetPlanForm() {
+  editingPlanId = null;
+  $("planDate").value = ""; $("planTimeStart").value = ""; $("planTimeEnd").value = ""; $("planTitle").value = ""; $("planMemo").value = "";
+  $("planAddBtn").textContent = "일정 추가";
 }
 async function delPlan(it) {
   if (!confirm("이 일정을 지울까요?")) return;
   try { await deleteDoc(doc(db, PLAN_COL, it.id)); }
   catch (e) { toast("지우지 못했어요."); }
 }
-function openPlan() { subscribePlan(); renderPlan(); $("planOverlay").classList.add("active"); document.body.style.overflow = "hidden"; }
-function closePlan() { $("planOverlay").classList.remove("active"); document.body.style.overflow = ""; }
+function openPlan() { resetPlanForm(); subscribePlan(); renderPlan(); $("planOverlay").classList.add("active"); document.body.style.overflow = "hidden"; }
+function closePlan() { resetPlanForm(); $("planOverlay").classList.remove("active"); document.body.style.overflow = ""; }
 
 /* ---------- 즐겨찾기 · N년 전 오늘 · 갤러리 · 통계 · 댓글 배지 ---------- */
 var showFavOnly = false;
@@ -1297,19 +1366,23 @@ function renderOnThisDay() {
   el.innerHTML = '<div class="otd"><div class="otd-label">✶ ' + years + '년 전 오늘</div><div class="otd-title">' + esc(title) + '</div><div class="otd-sub">' + esc(fmtDate(m.date)) + (matches.length > 1 ? " 외 " + (matches.length - 1) + "개" : "") + '</div></div>';
   el.querySelector(".otd").onclick = function () { openDetail(m); };
 }
-function openGallery() {
-  var grid = $("galleryGrid"), items = [];
-  memories.forEach(function (m) { photosOf(m).forEach(function (p) { items.push({ src: p, m: m }); }); });
-  if (!items.length) { grid.innerHTML = '<div class="gallery-empty">아직 사진이 없어요.</div>'; }
-  else {
-    grid.innerHTML = "";
-    items.forEach(function (it) {
-      var img = document.createElement("img"); img.src = it.src; img.loading = "lazy"; img.alt = "";
-      img.onclick = function () { closeGallery(); openDetail(it.m); };
-      grid.appendChild(img);
-    });
-  }
+async function openGallery() {
+  var grid = $("galleryGrid");
   $("galleryOverlay").classList.add("active"); document.body.style.overflow = "hidden";
+  grid.innerHTML = '<div class="gallery-empty">사진 불러오는 중…</div>';
+  var items = [];
+  for (var i = 0; i < memories.length; i++) {
+    var m = memories[i];
+    var ps = await loadPhotos(m);
+    ps.forEach(function (p) { items.push({ src: p, m: m }); });
+  }
+  if (!items.length) { grid.innerHTML = '<div class="gallery-empty">아직 사진이 없어요.</div>'; return; }
+  grid.innerHTML = "";
+  items.forEach(function (it) {
+    var img = document.createElement("img"); img.src = it.src; img.loading = "lazy"; img.alt = "";
+    img.onclick = function () { closeGallery(); openDetail(it.m); };
+    grid.appendChild(img);
+  });
 }
 function closeGallery() { $("galleryOverlay").classList.remove("active"); document.body.style.overflow = ""; }
 function topN(obj, n) { return Object.keys(obj).map(function (k) { return { k: k, v: obj[k] }; }).sort(function (a, b) { return b.v - a.v; }).slice(0, n); }
@@ -1322,7 +1395,7 @@ function openStats() {
     var longest = null, maxLen = -1;
     var STOP = { "그리고": 1, "그래서": 1, "그런데": 1, "근데": 1, "우리": 1, "우리가": 1, "우리는": 1, "너무": 1, "정말": 1, "진짜": 1, "오늘": 1, "내일": 1, "어제": 1, "다시": 1, "그냥": 1, "같이": 1, "하고": 1, "해서": 1, "있는": 1, "없는": 1, "이렇게": 1, "저렇게": 1, "그때": 1, "엄청": 1, "많이": 1, "조금": 1, "나는": 1, "너는": 1, "같은": 1, "그게": 1, "이거": 1, "저거": 1, "그거": 1 };
     memories.forEach(function (m) {
-      photoCount += photosOf(m).length;
+      photoCount += photoCountOf(m);
       commentTotal += commentsOf(m).length;
       var tt = stripTags(m.title), cc = stripTags(m.content);
       totalChars += tt.length + cc.length;
@@ -1405,7 +1478,13 @@ async function deleteCurrent() {
   if (!detailCurrent) return;
   if (!checkPw(detailCurrent, "삭제")) return;
   if (!confirm("이 추억을 지울까요? 되돌릴 수 없어요.")) return;
-  try { await deleteDoc(doc(db, MEM_COL, detailCurrent.id)); closeDetail(); toast("추억을 지웠어요."); }
+  try {
+    var m = detailCurrent;
+    if (m.photoIds && m.photoIds.length) {
+      for (var i = 0; i < m.photoIds.length; i++) { try { await deleteDoc(doc(db, PHOTO_COL, m.photoIds[i])); } catch (e) {} }
+    }
+    await deleteDoc(doc(db, MEM_COL, m.id)); closeDetail(); toast("추억을 지웠어요.");
+  }
   catch (e) { toast("지우지 못했어요. 다시 시도해주세요."); }
 }
 function commentsOf(m) { return Array.isArray(m && m.comments) ? m.comments : []; }
