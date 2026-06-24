@@ -130,9 +130,9 @@
   .card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, var(--gold), transparent); opacity: .7; }
   .card .photo { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; background: #ded0b6; }
   .card .body { padding: 16px 17px 17px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
-  .card .meta { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--text-dim); }
-  .card .meta .date { font-family: var(--serif); letter-spacing: .3px; }
-  .card .mood-chip { margin-left: auto; background: rgba(196,125,112,.12); color: #9a5346; border-radius: 999px; padding: 2px 9px; font-size: 11px; white-space: nowrap; }
+  .card .meta { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; row-gap: 5px; font-size: 11.5px; color: var(--text-dim); }
+  .card .meta .date { font-family: var(--serif); letter-spacing: .3px; white-space: nowrap; flex-shrink: 0; }
+  .card .mood-chip { background: rgba(196,125,112,.12); color: #9a5346; border-radius: 999px; padding: 2px 9px; font-size: 11px; white-space: nowrap; }
   .card h3 { font-family: var(--serif); font-weight: 700; font-size: 18px; line-height: 1.35; color: var(--text); }
   .card .excerpt { font-size: 13.5px; color: var(--text-dim); line-height: 1.65; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
   .card .foot { margin-top: auto; padding-top: 8px; font-size: 11.5px; color: var(--text-dim); display: flex; align-items: center; gap: 6px; border-top: 1px dashed var(--card-edge); }
@@ -308,6 +308,10 @@
   .plan-form textarea { resize:vertical; min-height:46px; line-height:1.5; }
   .plan-form .plan-date { flex:1.5; }
   .plan-form .plan-time { flex:1; }
+  .plan-form .time-row { align-items:center; }
+  .plan-form .tilde { flex-shrink:0; color:var(--text-dim); font-size:15px; padding:0 1px; }
+  .plan-field-label { font-size:12px; color:var(--text-dim); margin:2px 0 -3px; }
+  .plan-field-label .opt { color:#b0a48f; font-size:11.5px; }
   .plan-add-btn { margin-top:2px; padding:12px; border:none; border-radius:12px; background:var(--gold); color:#fff; font-family:var(--sans); font-weight:700; font-size:14.5px; cursor:pointer; }
   .plan-add-btn:hover { filter:brightness(1.06); }
   .plan-section-label { font-family:var(--sans); font-size:12.5px; font-weight:700; color:var(--text-dim); margin:20px 0 9px; letter-spacing:.4px; }
@@ -529,9 +533,12 @@
     <div class="modal-body">
       <p class="plan-sub">함께할 약속을 적어두면 둘 다 볼 수 있어요. 예매한 내역도 같이 적어두면 까먹지 않아요.</p>
       <div class="plan-form">
-        <div class="row">
-          <input type="date" id="planDate" class="plan-date" />
-          <input type="time" id="planTime" class="plan-time" />
+        <input type="date" id="planDate" class="plan-date" />
+        <div class="plan-field-label">시간 <span class="opt">· 끝나는 시간은 비워둬도 돼요</span></div>
+        <div class="row time-row">
+          <input type="time" id="planTimeStart" class="plan-time" />
+          <span class="tilde">~</span>
+          <input type="time" id="planTimeEnd" class="plan-time" />
         </div>
         <input type="text" id="planTitle" placeholder="무엇을 하나요? 예) 영화 보기" maxlength="60" />
         <textarea id="planMemo" placeholder="예매 내역·장소·메모 (선택)&#10;예) CGV 강남 3관 G열 / 7시 저녁 예약" maxlength="300"></textarea>
@@ -1211,9 +1218,13 @@ function fmtPlanTime(t) {
   var h = +hm[0]; var ap = h < 12 ? "오전" : "오후"; var h12 = h % 12; if (h12 === 0) h12 = 12;
   return ap + " " + h12 + ":" + hm[1];
 }
+function fmtPlanRange(s, e) {
+  if (!s) return "";
+  return e ? fmtPlanTime(s) + " ~ " + fmtPlanTime(e) : fmtPlanTime(s);
+}
 function planRow(p, past) {
   return '<div class="plan-item' + (past ? " past" : "") + '">' +
-    '<div class="plan-when"><div class="d">' + esc(fmtPlanDate(p.date)) + '</div>' + (p.time ? '<div class="t">' + esc(fmtPlanTime(p.time)) + '</div>' : '') + '</div>' +
+    '<div class="plan-when"><div class="d">' + esc(fmtPlanDate(p.date)) + '</div>' + (p.time ? '<div class="t">' + esc(fmtPlanRange(p.time, p.endTime)) + '</div>' : '') + '</div>' +
     '<div class="plan-body"><div class="plan-title">' + esc(p.title || "(제목 없음)") + '</div>' + (p.memo ? '<div class="plan-memo">' + esc(p.memo) + '</div>' : '') + '</div>' +
     '<button class="plan-del" type="button" data-id="' + p.id + '" aria-label="삭제">×</button></div>';
 }
@@ -1236,20 +1247,21 @@ function renderUpcomingPlan() {
   var today = todayStr();
   var next = planItems.filter(function (p) { return (p.date || "") >= today; })[0];
   if (!next) { box.innerHTML = ""; return; }
-  var when = fmtPlanDate(next.date) + (next.time ? " " + fmtPlanTime(next.time) : "");
+  var when = fmtPlanDate(next.date) + (next.time ? " " + fmtPlanRange(next.time, next.endTime) : "");
   box.innerHTML = '<div class="upcoming-plan" id="upcomingPlanCard"><span class="ic">📅</span><span class="tx">다가오는 데이트 · <b>' + esc(when) + '</b> · ' + esc(next.title || "") + '</span><span class="arr">›</span></div>';
   var card = $("upcomingPlanCard"); if (card) card.onclick = openPlan;
 }
 async function addPlan() {
   var date = ($("planDate").value || "").trim();
-  var time = ($("planTime").value || "").trim();
+  var ts = ($("planTimeStart").value || "").trim();
+  var te = ($("planTimeEnd").value || "").trim();
   var title = ($("planTitle").value || "").trim();
   var memo = ($("planMemo").value || "").trim();
   if (!date) { toast("날짜를 골라주세요."); return; }
   if (!title) { toast("무엇을 할지 적어주세요."); return; }
   try {
-    await addDoc(collection(db, PLAN_COL), { date: date, time: time, title: title, memo: memo, createdAt: Date.now() });
-    $("planDate").value = ""; $("planTime").value = ""; $("planTitle").value = ""; $("planMemo").value = "";
+    await addDoc(collection(db, PLAN_COL), { date: date, time: ts, endTime: te, title: title, memo: memo, createdAt: Date.now() });
+    $("planDate").value = ""; $("planTimeStart").value = ""; $("planTimeEnd").value = ""; $("planTitle").value = ""; $("planMemo").value = "";
   } catch (e) { toast("추가하지 못했어요."); }
 }
 async function delPlan(it) {
