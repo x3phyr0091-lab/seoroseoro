@@ -418,12 +418,20 @@
   .card .photo-wrap { position:relative; }
 
   /* ===== 상세 갤러리 ===== */
+  .gallery-wrap { position: relative; }
   .detail-gallery { display:flex; gap:0; overflow-x:auto; scroll-snap-type:x mandatory; border-radius:14px; cursor:grab; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
   .detail-gallery::-webkit-scrollbar { display:none; }
   .detail-gallery.dragging { cursor:grabbing; }
-  .detail-gallery img { flex:0 0 100%; width:100%; height:240px; object-fit:cover; scroll-snap-align:center; border-radius:14px; user-select:none; -webkit-user-drag:none; pointer-events:none; }
-  .detail-gallery.single { cursor:default; }
-  .detail-gallery.single img { height:auto; }
+  .detail-gallery img { flex:0 0 100%; width:100%; height:320px; object-fit:contain; background:rgba(60,40,55,.05); scroll-snap-align:center; border-radius:14px; user-select:none; -webkit-user-drag:none; cursor:zoom-in; }
+  .gal-arrow { position:absolute; top:50%; transform:translateY(-50%); width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,.82); border:1px solid var(--card-edge); color:var(--ink); font-size:24px; line-height:1; cursor:pointer; z-index:6; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 10px rgba(0,0,0,.18); padding:0; }
+  .gal-arrow.prev { left:8px; }
+  .gal-arrow.next { right:8px; }
+  .gal-arrow.hide { display:none; }
+  .gal-arrow:hover { background:#fff; }
+  .lightbox { position:fixed; inset:0; background:rgba(0,0,0,.92); z-index:3000; display:none; align-items:center; justify-content:center; padding:18px; }
+  .lightbox.active { display:flex; }
+  .lightbox img { max-width:100%; max-height:100%; object-fit:contain; border-radius:8px; }
+  .lb-close { position:absolute; top:14px; right:18px; background:rgba(255,255,255,.16); border:none; color:#fff; font-size:26px; width:44px; height:44px; border-radius:50%; cursor:pointer; z-index:3001; }
   .gallery-dots { display:flex; justify-content:center; gap:6px; margin-top:10px; }
   .gallery-dots.hide { display:none; }
   .gallery-dots .dot { width:7px; height:7px; border-radius:50%; background:var(--card-edge); transition:all .2s; }
@@ -433,12 +441,12 @@
   .modal-lg #detailTitle { font-size: 24px; }
   .modal-lg .detail-content { font-size: 17.5px; line-height: 1.95; }
   .modal-lg .detail-meta { font-size: 14px; }
-  .modal-lg .detail-gallery:not(.single) img { height: 280px; }
+  .modal-lg .detail-gallery img { height: 360px; }
   @media (min-width: 700px) {
     .modal-lg .modal-body { padding: 26px 38px 38px; }
     .modal-lg #detailTitle { font-size: 30px; }
     .modal-lg .detail-content { font-size: 19.5px; line-height: 2.05; }
-    .modal-lg .detail-gallery:not(.single) img { height: 380px; }
+    .modal-lg .detail-gallery img { height: 440px; }
   }
 </style>
 </head>
@@ -551,6 +559,8 @@
     <div class="modal-body"><div id="statsBody"></div></div>
   </div>
 </div>
+
+<div class="lightbox" id="lightbox"><button class="lb-close" id="lbClose" type="button" aria-label="닫기">×</button><img id="lightboxImg" src="" alt="" /></div>
 
 <div class="overlay" id="bucketOverlay">
   <div class="modal modal-lg">
@@ -711,7 +721,11 @@
 <!-- ============ DETAIL MODAL ============ -->
 <div class="overlay" id="detailOverlay">
   <div class="modal modal-lg" role="dialog" aria-modal="true">
-    <div class="detail-gallery" id="detailGallery" style="display:none"></div>
+    <div class="gallery-wrap" id="galleryWrap" style="display:none">
+      <div class="detail-gallery" id="detailGallery"></div>
+      <button class="gal-arrow prev hide" id="galPrev" type="button" aria-label="이전">‹</button>
+      <button class="gal-arrow next hide" id="galNext" type="button" aria-label="다음">›</button>
+    </div>
     <div class="gallery-dots hide" id="galleryDots"></div>
     <div class="modal-head"><h2 id="detailTitle"></h2><button class="x" id="detailClose" aria-label="닫기">×</button></div>
     <div class="modal-body">
@@ -1258,14 +1272,15 @@ function buildDots(el, dotsEl, n) {
     var ds = dotsEl.children; for (var k = 0; k < ds.length; k++) ds[k].className = "dot" + (k === idx ? " on" : "");
   };
 }
+var galDragMoved = false;
 function enableGalleryDrag(el) {
   var down = false, startX = 0, startScroll = 0;
   el.addEventListener("pointerdown", function (e) {
     if (e.pointerType === "touch") return;
-    down = true; startX = e.clientX; startScroll = el.scrollLeft; el.classList.add("dragging");
+    down = true; galDragMoved = false; startX = e.clientX; startScroll = el.scrollLeft; el.classList.add("dragging");
     try { el.setPointerCapture(e.pointerId); } catch (x) {}
   });
-  el.addEventListener("pointermove", function (e) { if (!down) return; el.scrollLeft = startScroll - (e.clientX - startX); });
+  el.addEventListener("pointermove", function (e) { if (!down) return; if (Math.abs(e.clientX - startX) > 4) galDragMoved = true; el.scrollLeft = startScroll - (e.clientX - startX); });
   function end() {
     if (!down) return; down = false; el.classList.remove("dragging");
     var w = el.clientWidth || 1; var idx = Math.round(el.scrollLeft / w);
@@ -1275,24 +1290,40 @@ function enableGalleryDrag(el) {
   el.addEventListener("pointercancel", end);
   el.addEventListener("pointerleave", end);
 }
+function galScroll(dir) {
+  var el = $("detailGallery"); var w = el.clientWidth || 1; var idx = Math.round(el.scrollLeft / w);
+  var n = el.querySelectorAll("img").length;
+  idx = Math.max(0, Math.min(n - 1, idx + dir));
+  el.scrollTo({ left: idx * w, behavior: "smooth" });
+}
+function openLightbox(src) { $("lightboxImg").src = src; $("lightbox").classList.add("active"); }
+function closeLightbox() { $("lightbox").classList.remove("active"); $("lightboxImg").src = ""; }
 function openDetail(m) {
   detailCurrent = m;
-  var gal = $("detailGallery"), dots = $("galleryDots");
+  var gal = $("detailGallery"), dots = $("galleryDots"), wrap = $("galleryWrap");
   var cover = coverOf(m), cnt = photoCountOf(m);
   dots.classList.add("hide"); dots.innerHTML = "";
+  $("galPrev").classList.add("hide"); $("galNext").classList.add("hide");
   if (cnt > 0) {
-    gal.className = "detail-gallery" + (cnt === 1 ? " single" : "");
+    gal.className = "detail-gallery";
     gal.innerHTML = cover ? '<img src="' + cover + '" alt="" />' : "";
-    gal.style.display = "flex"; gal.scrollLeft = 0;
+    wrap.style.display = "block"; gal.scrollLeft = 0;
     loadPhotos(m).then(function (photos) {
       if (detailCurrent !== m) return;
       gal.innerHTML = "";
-      gal.className = "detail-gallery" + (photos.length === 1 ? " single" : "");
-      photos.forEach(function (src) { var im = document.createElement("img"); im.src = src; im.alt = ""; gal.appendChild(im); });
+      gal.className = "detail-gallery";
+      photos.forEach(function (src) {
+        var im = document.createElement("img"); im.src = src; im.alt = "";
+        im.onclick = function () { if (galDragMoved) { galDragMoved = false; return; } openLightbox(src); };
+        gal.appendChild(im);
+      });
       gal.scrollLeft = 0;
       buildDots(gal, dots, photos.length);
+      var multi = photos.length > 1;
+      $("galPrev").classList.toggle("hide", !multi);
+      $("galNext").classList.toggle("hide", !multi);
     });
-  } else { gal.style.display = "none"; gal.innerHTML = ""; }
+  } else { wrap.style.display = "none"; gal.innerHTML = ""; }
   $("detailTitle").innerHTML = stripTags(m.title).trim() ? m.title : "(제목 없음)";
   var meta = '<span class="date">' + esc(fmtDate(m.date)) + "</span>";
   if (m.place) meta += '<span>· ' + esc(m.place) + '</span>';
@@ -1916,6 +1947,10 @@ function init() {
   $("bucketBtn").onclick = openBucket;
   $("moodToggle").onclick = function () { $("moodPicker").classList.toggle("collapsed"); this.classList.toggle("open"); };
   enableGalleryDrag($("detailGallery"));
+  $("galPrev").onclick = function (e) { e.stopPropagation(); galScroll(-1); };
+  $("galNext").onclick = function (e) { e.stopPropagation(); galScroll(1); };
+  $("lbClose").onclick = closeLightbox;
+  $("lightbox").addEventListener("click", function (e) { if (e.target === this) closeLightbox(); });
   $("bucketClose").onclick = closeBucket;
   $("bucketAddBtn").onclick = addBucket;
   $("bucketInput").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); addBucket(); } });
