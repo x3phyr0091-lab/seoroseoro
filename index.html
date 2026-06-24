@@ -1170,12 +1170,9 @@ function openDetail(m) {
   } else { gal.style.display = "none"; gal.innerHTML = ""; }
   $("detailTitle").innerHTML = stripTags(m.title).trim() ? m.title : "(제목 없음)";
   var meta = '<span class="date">' + esc(fmtDate(m.date)) + "</span>";
-  if (m.place) meta += '<span>· ' + esc(m.place) + '</span><a class="map-link" href="https://map.naver.com/p/search/' + encodeURIComponent(m.place) + '" target="_blank" rel="noopener">📍 네이버</a><a class="map-link" href="https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(m.place) + '" target="_blank" rel="noopener">구글</a>';
+  if (m.place) meta += '<span>· ' + esc(m.place) + '</span>';
   $("detailMeta").innerHTML = meta;
   $("detailMoods").innerHTML = moodsOf(m).map(function (t) { var mo = MOODS.filter(function (x) { return x.t === t; })[0]; return mo ? '<span class="mood-chip">' + mo.e + " " + esc(t) + "</span>" : ""; }).join("");
-  Array.prototype.forEach.call($("detailMeta").querySelectorAll(".map-link"), function (a) {
-    a.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); window.open(a.href, "_blank", "noopener"); });
-  });
   $("detailContent").innerHTML = m.content || "";
   var footParts = [];
   if (m.author) footParts.push(m.author);
