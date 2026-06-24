@@ -300,6 +300,35 @@
   .bucket-del { flex-shrink:0; background:none; border:none; cursor:pointer; color:var(--text-dim); font-size:20px; padding:0 4px; opacity:.5; line-height:1; }
   .bucket-del:hover { opacity:1; color:var(--rose); }
   .bucket-empty { text-align:center; color:var(--text-dim); font-size:14px; padding:34px 0; line-height:1.7; }
+  .plan-sub { font-size:13.5px; color:var(--text-dim); margin-bottom:14px; line-height:1.5; }
+  .plan-form { background:rgba(255,255,255,.5); border:1px solid var(--card-edge); border-radius:14px; padding:14px; margin-bottom:6px; display:flex; flex-direction:column; gap:9px; }
+  .plan-form .row { display:flex; gap:8px; }
+  .plan-form input, .plan-form textarea { width:100%; padding:10px 13px; border:1px solid var(--card-edge); border-radius:11px; background:rgba(255,255,255,.85); color:var(--text); font-family:var(--serif); font-size:14.5px; outline:none; }
+  .plan-form input:focus, .plan-form textarea:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(232,138,180,.16); }
+  .plan-form textarea { resize:vertical; min-height:46px; line-height:1.5; }
+  .plan-form .plan-date { flex:1.5; }
+  .plan-form .plan-time { flex:1; }
+  .plan-add-btn { margin-top:2px; padding:12px; border:none; border-radius:12px; background:var(--gold); color:#fff; font-family:var(--sans); font-weight:700; font-size:14.5px; cursor:pointer; }
+  .plan-add-btn:hover { filter:brightness(1.06); }
+  .plan-section-label { font-family:var(--sans); font-size:12.5px; font-weight:700; color:var(--text-dim); margin:20px 0 9px; letter-spacing:.4px; }
+  .plan-list { display:flex; flex-direction:column; gap:9px; }
+  .plan-item { display:flex; gap:13px; padding:13px 15px; background:rgba(255,255,255,.6); border:1px solid var(--card-edge); border-radius:14px; align-items:flex-start; }
+  .plan-item.past { opacity:.5; }
+  .plan-when { flex-shrink:0; text-align:center; min-width:56px; padding-top:1px; }
+  .plan-when .d { font-family:var(--serif); font-size:14.5px; color:var(--gold); font-weight:700; line-height:1.25; }
+  .plan-when .t { font-size:11px; color:var(--text-dim); margin-top:3px; }
+  .plan-body { flex:1; min-width:0; }
+  .plan-title { font-size:15px; color:var(--text); font-weight:600; word-break:break-word; line-height:1.4; }
+  .plan-memo { font-size:13px; color:var(--text-dim); margin-top:5px; white-space:pre-wrap; word-break:break-word; line-height:1.5; }
+  .plan-del { flex-shrink:0; background:none; border:none; cursor:pointer; color:var(--text-dim); font-size:19px; padding:0 2px; opacity:.5; line-height:1; }
+  .plan-del:hover { opacity:1; color:var(--rose); }
+  .plan-empty { text-align:center; color:var(--text-dim); font-size:14px; padding:30px 0; line-height:1.7; }
+  .upcoming-plan { display:flex; align-items:center; gap:11px; background:rgba(111,159,224,.13); border:1px solid rgba(111,159,224,.28); border-radius:16px; padding:13px 16px; margin-bottom:16px; cursor:pointer; transition:background .15s; }
+  .upcoming-plan:hover { background:rgba(111,159,224,.2); }
+  .upcoming-plan .ic { font-size:18px; flex-shrink:0; }
+  .upcoming-plan .tx { flex:1; min-width:0; font-size:13.5px; color:var(--text); line-height:1.45; }
+  .upcoming-plan .tx b { color:var(--blue); font-family:var(--serif); }
+  .upcoming-plan .arr { color:var(--text-dim); font-size:20px; flex-shrink:0; }
   .card { position:relative; }
   .fav-btn { position:absolute; top:10px; right:10px; z-index:3; width:34px; height:34px; border:none; border-radius:50%; background:rgba(20,12,24,.45); color:#ffd86b; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:transform .12s; }
   .fav-btn:hover { transform:scale(1.12); }
@@ -436,6 +465,9 @@
       <button class="btn icon-btn" id="bucketBtn" title="우리의 버킷리스트" aria-label="버킷리스트">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
       </button>
+      <button class="btn icon-btn" id="planBtn" title="데이트 일정" aria-label="데이트 일정">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      </button>
       <button class="btn icon-btn" id="galleryBtn" title="사진 모아보기" aria-label="사진 모아보기">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.5-3.5L9 20"/></svg>
       </button>
@@ -456,6 +488,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
       </button>
     </div>
+    <div id="upcomingPlan"></div>
     <div id="onThisDay"></div>
     <div id="listArea"></div>
   </div>
@@ -486,6 +519,25 @@
         <button type="button" id="bucketAddBtn">추가</button>
       </div>
       <div class="bucket-list" id="bucketList"></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="planOverlay">
+  <div class="modal modal-lg">
+    <div class="modal-head"><h2>데이트 일정</h2><button class="x" id="planClose" aria-label="닫기">×</button></div>
+    <div class="modal-body">
+      <p class="plan-sub">함께할 약속을 적어두면 둘 다 볼 수 있어요. 예매한 내역도 같이 적어두면 까먹지 않아요.</p>
+      <div class="plan-form">
+        <div class="row">
+          <input type="date" id="planDate" class="plan-date" />
+          <input type="time" id="planTime" class="plan-time" />
+        </div>
+        <input type="text" id="planTitle" placeholder="무엇을 하나요? 예) 영화 보기" maxlength="60" />
+        <textarea id="planMemo" placeholder="예매 내역·장소·메모 (선택)&#10;예) CGV 강남 3관 G열 / 7시 저녁 예약" maxlength="300"></textarea>
+        <button type="button" class="plan-add-btn" id="planAddBtn">일정 추가</button>
+      </div>
+      <div id="planListWrap"></div>
     </div>
   </div>
 </div>
@@ -841,6 +893,7 @@ function enterMain() {
   buildAuthorPicker();
   show("main");
   subscribeMemories();
+  subscribePlan();
 }
 function buildAuthorPicker() {
   var p = $("authorPicker"); p.innerHTML = "";
@@ -1129,6 +1182,83 @@ async function delBucket(it) {
 }
 function openBucket() { subscribeBucket(); renderBucket(); $("bucketOverlay").classList.add("active"); document.body.style.overflow = "hidden"; }
 function closeBucket() { $("bucketOverlay").classList.remove("active"); document.body.style.overflow = ""; }
+
+/* ---------- date plans ---------- */
+var PLAN_COL = "plans";
+var planItems = [];
+var planUnsub = null;
+function subscribePlan() {
+  if (planUnsub) return;
+  planUnsub = onSnapshot(collection(db, PLAN_COL), function (snap) {
+    planItems = [];
+    snap.forEach(function (d) { var x = d.data(); x.id = d.id; planItems.push(x); });
+    planItems.sort(planSort);
+    renderPlan(); renderUpcomingPlan();
+  }, function () {});
+}
+function planKey(p) { return (p.date || "9999-99-99") + " " + (p.time || "99:99"); }
+function planSort(a, b) { var ka = planKey(a), kb = planKey(b); return ka < kb ? -1 : ka > kb ? 1 : 0; }
+function fmtPlanDate(s) {
+  if (!s) return "";
+  var p = s.split("-"); if (p.length !== 3) return s;
+  var d = new Date(+p[0], +p[1] - 1, +p[2]);
+  var wd = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
+  return (+p[1]) + "월 " + (+p[2]) + "일 (" + wd + ")";
+}
+function fmtPlanTime(t) {
+  if (!t) return "";
+  var hm = t.split(":"); if (hm.length < 2) return t;
+  var h = +hm[0]; var ap = h < 12 ? "오전" : "오후"; var h12 = h % 12; if (h12 === 0) h12 = 12;
+  return ap + " " + h12 + ":" + hm[1];
+}
+function planRow(p, past) {
+  return '<div class="plan-item' + (past ? " past" : "") + '">' +
+    '<div class="plan-when"><div class="d">' + esc(fmtPlanDate(p.date)) + '</div>' + (p.time ? '<div class="t">' + esc(fmtPlanTime(p.time)) + '</div>' : '') + '</div>' +
+    '<div class="plan-body"><div class="plan-title">' + esc(p.title || "(제목 없음)") + '</div>' + (p.memo ? '<div class="plan-memo">' + esc(p.memo) + '</div>' : '') + '</div>' +
+    '<button class="plan-del" type="button" data-id="' + p.id + '" aria-label="삭제">×</button></div>';
+}
+function renderPlan() {
+  var wrap = $("planListWrap"); if (!wrap) return;
+  if (!planItems.length) { wrap.innerHTML = '<div class="plan-empty">아직 등록된 일정이 없어요.<br>첫 데이트 약속을 적어보세요 📅</div>'; return; }
+  var today = todayStr();
+  var upcoming = planItems.filter(function (p) { return (p.date || "") >= today; });
+  var past = planItems.filter(function (p) { return (p.date || "") < today; }).reverse();
+  var html = "";
+  if (upcoming.length) html += '<div class="plan-section-label">다가오는 약속</div><div class="plan-list">' + upcoming.map(function (p) { return planRow(p, false); }).join("") + '</div>';
+  if (past.length) html += '<div class="plan-section-label">지난 약속</div><div class="plan-list">' + past.map(function (p) { return planRow(p, true); }).join("") + '</div>';
+  wrap.innerHTML = html;
+  Array.prototype.forEach.call(wrap.querySelectorAll(".plan-del"), function (b) {
+    b.onclick = function () { var id = b.getAttribute("data-id"); var it = planItems.filter(function (p) { return p.id === id; })[0]; if (it) delPlan(it); };
+  });
+}
+function renderUpcomingPlan() {
+  var box = $("upcomingPlan"); if (!box) return;
+  var today = todayStr();
+  var next = planItems.filter(function (p) { return (p.date || "") >= today; })[0];
+  if (!next) { box.innerHTML = ""; return; }
+  var when = fmtPlanDate(next.date) + (next.time ? " " + fmtPlanTime(next.time) : "");
+  box.innerHTML = '<div class="upcoming-plan" id="upcomingPlanCard"><span class="ic">📅</span><span class="tx">다가오는 데이트 · <b>' + esc(when) + '</b> · ' + esc(next.title || "") + '</span><span class="arr">›</span></div>';
+  var card = $("upcomingPlanCard"); if (card) card.onclick = openPlan;
+}
+async function addPlan() {
+  var date = ($("planDate").value || "").trim();
+  var time = ($("planTime").value || "").trim();
+  var title = ($("planTitle").value || "").trim();
+  var memo = ($("planMemo").value || "").trim();
+  if (!date) { toast("날짜를 골라주세요."); return; }
+  if (!title) { toast("무엇을 할지 적어주세요."); return; }
+  try {
+    await addDoc(collection(db, PLAN_COL), { date: date, time: time, title: title, memo: memo, createdAt: Date.now() });
+    $("planDate").value = ""; $("planTime").value = ""; $("planTitle").value = ""; $("planMemo").value = "";
+  } catch (e) { toast("추가하지 못했어요."); }
+}
+async function delPlan(it) {
+  if (!confirm("이 일정을 지울까요?")) return;
+  try { await deleteDoc(doc(db, PLAN_COL, it.id)); }
+  catch (e) { toast("지우지 못했어요."); }
+}
+function openPlan() { subscribePlan(); renderPlan(); $("planOverlay").classList.add("active"); document.body.style.overflow = "hidden"; }
+function closePlan() { $("planOverlay").classList.remove("active"); document.body.style.overflow = ""; }
 
 /* ---------- 즐겨찾기 · N년 전 오늘 · 갤러리 · 통계 · 댓글 배지 ---------- */
 var showFavOnly = false;
@@ -1575,6 +1705,11 @@ function init() {
   $("bucketAddBtn").onclick = addBucket;
   $("bucketInput").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); addBucket(); } });
   $("bucketOverlay").addEventListener("mousedown", function (e) { if (e.target === this) closeBucket(); });
+  $("planBtn").onclick = openPlan;
+  $("planClose").onclick = closePlan;
+  $("planAddBtn").onclick = addPlan;
+  $("planTitle").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); addPlan(); } });
+  $("planOverlay").addEventListener("mousedown", function (e) { if (e.target === this) closePlan(); });
   $("galleryBtn").onclick = openGallery;
   $("galleryClose").onclick = closeGallery;
   $("galleryOverlay").addEventListener("mousedown", function (e) { if (e.target === this) closeGallery(); });
