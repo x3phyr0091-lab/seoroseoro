@@ -342,6 +342,14 @@
   .comment-item .c-author { font-family:var(--sans); font-size:12.5px; font-weight:700; color:var(--ink); }
   .comment-item .c-time { font-size:11px; color:var(--text-dim); }
   .comment-item .c-del { margin-left:auto; background:none; border:none; color:var(--text-dim); font-size:11px; cursor:pointer; padding:2px 4px; opacity:.6; }
+  .comment-item .c-reply-btn { margin-left:auto; background:none; border:none; color:var(--blue); font-size:11.5px; cursor:pointer; font-family:var(--sans); padding:2px 4px; font-weight:600; }
+  .comment-item .c-reply-btn + .c-del { margin-left:0; }
+  .comment-item .c-reply-btn:hover { text-decoration:underline; }
+  .reply-item { margin-left:20px; background:rgba(255,255,255,.4); border-left:2px solid var(--gold-soft); }
+  .reply-item .c-author { color:var(--text); }
+  .reply-form { display:flex; gap:6px; margin:0 0 8px 20px; }
+  .reply-input { flex:1; min-width:0; resize:none; border:1px solid var(--card-edge); border-radius:12px; padding:8px 10px; font-size:13px; font-family:var(--sans); color:var(--text); background:#fff; outline:none; line-height:1.4; }
+  .reply-send { flex-shrink:0; background:var(--gold); border:none; color:#fff; border-radius:12px; padding:0 14px; font-size:13px; font-weight:700; font-family:var(--sans); cursor:pointer; }
   .comment-item .c-del:hover { opacity:1; color:#c0392b; }
   .comment-item .c-text { font-size:14px; line-height:1.55; color:var(--text); white-space:pre-wrap; word-break:break-word; }
   .comment-empty { font-size:13px; color:var(--text-dim); padding:4px 0 12px; }
@@ -1445,7 +1453,7 @@ async function saveMemory() {
 }
 
 /* ---------- detail ---------- */
-var detailCurrent = null; var commentAuthor = null;
+var detailCurrent = null; var commentAuthor = null; var replyingTo = null;
 function buildDots(el, dotsEl, n) {
   dotsEl.innerHTML = "";
   if (n <= 1) { dotsEl.classList.add("hide"); el.onscroll = null; return; }
@@ -1877,25 +1885,54 @@ function fmtCommentTime(at) {
   if (d.toDateString() === now.toDateString()) return "오늘 " + hh + ":" + mm;
   return (d.getMonth() + 1) + "월 " + d.getDate() + "일 " + hh + ":" + mm;
 }
+function cidOf(c) { return c.cid || ("t" + (c.at || 0)); }
+function genCid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+function buildCommentEl(c, isReply) {
+  var item = document.createElement("div");
+  item.className = isReply ? "comment-item reply-item" : "comment-item";
+  var head = document.createElement("div"); head.className = "c-head";
+  var au = document.createElement("span"); au.className = "c-author"; au.textContent = (isReply ? "↳ " : "") + (c.author || "익명");
+  var tm = document.createElement("span"); tm.className = "c-time"; tm.textContent = fmtCommentTime(c.at);
+  head.appendChild(au); head.appendChild(tm);
+  if (!isReply) {
+    var rep = document.createElement("button"); rep.className = "c-reply-btn"; rep.type = "button";
+    rep.textContent = (replyingTo === cidOf(c)) ? "취소" : "답글";
+    rep.onclick = function () { replyingTo = (replyingTo === cidOf(c)) ? null : cidOf(c); renderComments(detailCurrent); };
+    head.appendChild(rep);
+  }
+  var del = document.createElement("button"); del.className = "c-del"; del.type = "button"; del.textContent = "삭제";
+  del.onclick = function () { delComment(c); };
+  head.appendChild(del);
+  var tx = document.createElement("div"); tx.className = "c-text"; tx.textContent = c.text || "";
+  item.appendChild(head); item.appendChild(tx);
+  return item;
+}
+function buildReplyForm(parent) {
+  var wrap = document.createElement("div"); wrap.className = "reply-form";
+  var ta = document.createElement("textarea"); ta.id = "replyInput"; ta.rows = 1; ta.className = "reply-input";
+  ta.placeholder = (parent.author || "") + "님에게 답글…";
+  ta.addEventListener("input", function () { autoGrow(ta); });
+  ta.addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addReply(); } });
+  var send = document.createElement("button"); send.type = "button"; send.className = "reply-send"; send.textContent = "등록";
+  send.onclick = addReply;
+  wrap.appendChild(ta); wrap.appendChild(send);
+  setTimeout(function () { ta.focus(); }, 30);
+  return wrap;
+}
 function renderComments(m) {
-  var list = commentsOf(m).slice().sort(function (a, b) { return (a.at || 0) - (b.at || 0); });
+  var all = commentsOf(m);
   var box = $("commentList");
-  $("commentCount").textContent = list.length ? list.length : "";
-  if (!list.length) {
+  $("commentCount").textContent = all.length ? all.length : "";
+  if (!all.length) {
     box.innerHTML = '<div class="comment-empty">아직 댓글이 없어요. 첫 댓글을 남겨보세요.</div>';
   } else {
     box.innerHTML = "";
-    list.forEach(function (c) {
-      var item = document.createElement("div"); item.className = "comment-item";
-      var head = document.createElement("div"); head.className = "c-head";
-      var au = document.createElement("span"); au.className = "c-author"; au.textContent = c.author || "익명";
-      var tm = document.createElement("span"); tm.className = "c-time"; tm.textContent = fmtCommentTime(c.at);
-      var del = document.createElement("button"); del.className = "c-del"; del.type = "button"; del.textContent = "삭제";
-      del.onclick = function () { delComment(c); };
-      head.appendChild(au); head.appendChild(tm); head.appendChild(del);
-      var tx = document.createElement("div"); tx.className = "c-text"; tx.textContent = c.text || "";
-      item.appendChild(head); item.appendChild(tx);
-      box.appendChild(item);
+    var tops = all.filter(function (c) { return !c.parent; }).sort(function (a, b) { return (a.at || 0) - (b.at || 0); });
+    tops.forEach(function (c) {
+      box.appendChild(buildCommentEl(c, false));
+      var replies = all.filter(function (r) { return r.parent === cidOf(c); }).sort(function (a, b) { return (a.at || 0) - (b.at || 0); });
+      replies.forEach(function (r) { box.appendChild(buildCommentEl(r, true)); });
+      if (replyingTo === cidOf(c)) box.appendChild(buildReplyForm(c));
     });
   }
   var who = $("commentWho");
@@ -1908,13 +1945,13 @@ function renderComments(m) {
     b.onclick = function () { commentAuthor = n; renderComments(detailCurrent); };
     who.appendChild(b);
   });
-  if (m && m.id) setSeen(m.id, commentsOf(m).length);
+  if (m && m.id) setSeen(m.id, all.length);
 }
 async function addComment() {
   if (!detailCurrent) return;
   var t = $("commentText").value.trim();
   if (!t) return;
-  var c = { text: t, author: commentAuthor || "나", at: Date.now() };
+  var c = { cid: genCid(), text: t, author: commentAuthor || "나", at: Date.now(), parent: null };
   $("commentSend").disabled = true;
   var ref = doc(db, MEM_COL, detailCurrent.id);
   try {
@@ -1927,12 +1964,33 @@ async function addComment() {
   $("commentText").value = ""; autoGrow($("commentText"));
   $("commentSend").disabled = false;
 }
+async function addReply() {
+  if (!detailCurrent || !replyingTo) return;
+  var el = $("replyInput"); if (!el) return;
+  var t = el.value.trim(); if (!t) return;
+  var c = { cid: genCid(), text: t, author: commentAuthor || "나", at: Date.now(), parent: replyingTo };
+  var ref = doc(db, MEM_COL, detailCurrent.id);
+  try {
+    await updateDoc(ref, { comments: arrayUnion(c) });
+    setNotifSeen(Date.now());
+  } catch (e) {
+    try { await setDoc(ref, { comments: commentsOf(detailCurrent).concat([c]) }, { merge: true }); setNotifSeen(Date.now()); }
+    catch (e2) { toast("답글을 남기지 못했어요."); return; }
+  }
+  replyingTo = null;
+}
 async function delComment(c) {
   if (!detailCurrent) return;
-  if (!confirm("이 댓글을 지울까요?")) return;
+  var isParent = !c.parent;
+  if (!confirm(isParent ? "이 댓글을 지울까요? (달린 답글도 함께 지워져요)" : "이 답글을 지울까요?")) return;
+  var cid = cidOf(c);
+  var all = commentsOf(detailCurrent);
+  var remain = isParent
+    ? all.filter(function (x) { return cidOf(x) !== cid && x.parent !== cid; })
+    : all.filter(function (x) { return cidOf(x) !== cid; });
   try {
-    await updateDoc(doc(db, MEM_COL, detailCurrent.id), { comments: arrayRemove(c) });
-  } catch (e) { toast("댓글을 지우지 못했어요."); }
+    await updateDoc(doc(db, MEM_COL, detailCurrent.id), { comments: remain });
+  } catch (e) { toast("지우지 못했어요."); }
 }
 function exportAll() {
   try {
