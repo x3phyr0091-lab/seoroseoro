@@ -102,6 +102,13 @@
   .gate .hint { font-size: 12px; color: var(--cream-dim); margin-top: 18px; line-height: 1.6; }
   .gate .err { color: var(--rose); font-size: 13px; min-height: 18px; margin-top: 10px; }
   .heart { color: var(--rose); font-style: normal; }
+  .bio-area { margin-top: 18px; }
+  .bio-divider { display:flex; align-items:center; gap:10px; color:var(--text-dim); font-size:12px; margin-bottom:14px; }
+  .bio-divider::before, .bio-divider::after { content:""; flex:1; height:1px; background:var(--card-edge); }
+  .bio-btn { width:100%; padding:13px; border-radius:14px; border:1.5px solid var(--gold); background:rgba(232,138,180,.1); color:#9a5346; font-family:var(--sans); font-weight:700; font-size:15px; cursor:pointer; }
+  .bio-btn:hover { background:rgba(232,138,180,.2); }
+  .bio-register { width:100%; padding:11px; border-radius:12px; border:1px dashed var(--card-edge); background:transparent; color:var(--text-dim); font-family:var(--sans); font-size:13px; cursor:pointer; }
+  .bio-register:hover { border-color:var(--gold); color:var(--ink); }
   .logo-wrap { display:flex; justify-content:center; margin-bottom:8px; }
   .logo-svg { width:100%; max-width:240px; height:auto; }
   .gate .logo-svg { max-width:270px; }
@@ -518,6 +525,11 @@
     </div>
     <div class="err" id="lockErr"></div>
     <button class="btn btn-gold" id="lockBtn">들어가기</button>
+    <div class="bio-area" id="bioArea" style="display:none">
+      <div class="bio-divider"><span>또는</span></div>
+      <button class="bio-btn" id="bioUnlockBtn" type="button" style="display:none">🔓 Face ID · 지문으로 열기</button>
+      <button class="bio-register" id="bioRegisterBtn" type="button" style="display:none">📲 이 기기에 Face ID · 지문 등록</button>
+    </div>
   </div>
 </section>
 
@@ -937,6 +949,7 @@ async function boot() {
   function goLock(s) {
     settings = s;
     show("lock");
+    updateBioUI();
     setTimeout(function () { var el = $("lockPins").querySelector("input"); if (el) el.focus(); }, 300);
   }
   try {
@@ -986,6 +999,48 @@ function doUnlock() {
   if (pin.length !== 4) { err.textContent = "암호 4자리를 입력해주세요."; return; }
   if (pin !== settings.pin) { err.textContent = "암호가 맞지 않아요."; clearPins($("lockPins")); return; }
   err.textContent = ""; enterMain();
+}
+function ab2b64(buf) { return btoa(String.fromCharCode.apply(null, new Uint8Array(buf))); }
+function b642ab(s) { var bin = atob(s); var u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u.buffer; }
+function randBytes(n) { var u = new Uint8Array(n); crypto.getRandomValues(u); return u; }
+function updateBioUI() {
+  var area = $("bioArea");
+  if (!area) return;
+  if (!window.PublicKeyCredential || !navigator.credentials || !navigator.credentials.create) { area.style.display = "none"; return; }
+  area.style.display = "block";
+  var has = !!localStorage.getItem("bio_cred_id");
+  $("bioUnlockBtn").style.display = has ? "block" : "none";
+  $("bioRegisterBtn").style.display = has ? "none" : "block";
+}
+async function registerBio() {
+  var pin = readPins($("lockPins")), err = $("lockErr");
+  if (pin !== (settings && settings.pin)) { err.textContent = "먼저 암호를 맞게 입력한 뒤 등록해주세요."; return; }
+  err.textContent = "";
+  try {
+    var cred = await navigator.credentials.create({ publicKey: {
+      challenge: randBytes(32),
+      rp: { name: "서로서로", id: location.hostname },
+      user: { id: randBytes(16), name: "seoroseoro", displayName: "서로서로" },
+      pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
+      authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required", residentKey: "preferred" },
+      timeout: 60000, attestation: "none"
+    } });
+    localStorage.setItem("bio_cred_id", ab2b64(cred.rawId));
+    toast("이 기기에 등록됐어요 ♥"); enterMain();
+  } catch (e) { err.textContent = "등록이 취소됐거나 이 기기에서 지원하지 않아요."; }
+}
+async function unlockBio() {
+  var id = localStorage.getItem("bio_cred_id"), err = $("lockErr");
+  if (!id) return;
+  err.textContent = "";
+  try {
+    await navigator.credentials.get({ publicKey: {
+      challenge: randBytes(32),
+      allowCredentials: [{ type: "public-key", id: b642ab(id) }],
+      userVerification: "required", timeout: 60000
+    } });
+    enterMain();
+  } catch (e) { err.textContent = "인식하지 못했어요. 암호로 들어와 주세요."; }
 }
 
 /* ---------- main ---------- */
@@ -1813,6 +1868,8 @@ function init() {
   wirePins($("setupPins")); wirePins($("lockPins"));
   $("setupBtn").onclick = doSetup;
   $("lockBtn").onclick = doUnlock;
+  $("bioUnlockBtn").onclick = unlockBio;
+  $("bioRegisterBtn").onclick = registerBio;
   $("lockPins").addEventListener("keydown", function (e) { if (e.key === "Enter") doUnlock(); });
   $("openAddBtn").onclick = openAdd;
   $("addClose").onclick = closeAdd;
