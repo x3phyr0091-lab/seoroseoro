@@ -105,6 +105,8 @@
   .notif-btn { position:relative; }
   .notif-badge { position:absolute; top:-3px; right:-3px; min-width:18px; height:18px; padding:0 5px; border-radius:999px; background:var(--rose); color:#fff; font-size:11px; font-weight:800; font-family:var(--sans); display:flex; align-items:center; justify-content:center; box-shadow:0 1px 4px rgba(232,127,159,.55); }
   .notif-badge.hide { display:none; }
+  .notif-readall { margin-left:auto; margin-right:10px; background:rgba(232,138,180,.14); border:1px solid var(--gold); color:#9a5346; border-radius:999px; padding:5px 13px; font-size:12.5px; font-weight:700; font-family:var(--sans); cursor:pointer; }
+  .notif-readall:hover { background:rgba(232,138,180,.26); }
   .notif-list { display:flex; flex-direction:column; gap:10px; }
   .notif-empty { text-align:center; color:var(--text-dim); padding:34px 10px; font-family:var(--sans); font-size:14px; }
   .notif-item { display:flex; gap:10px; align-items:flex-start; padding:12px 14px; border-radius:14px; background:rgba(255,255,255,.6); border:1px solid var(--card-edge); cursor:pointer; text-align:left; width:100%; }
@@ -688,7 +690,7 @@
 
 <div class="overlay" id="notifOverlay">
   <div class="modal modal-lg">
-    <div class="modal-head"><h2>새 소식</h2><button class="x" id="notifClose" aria-label="닫기">×</button></div>
+    <div class="modal-head"><h2>새 소식</h2><button class="notif-readall" id="notifReadAll" type="button">모두 읽음</button><button class="x" id="notifClose" aria-label="닫기">×</button></div>
     <div class="modal-body">
       <div class="notif-list" id="notifList"></div>
     </div>
@@ -1475,8 +1477,8 @@ async function saveMemory() {
       closeAdd(); toast("추억을 수정했어요 ♥");
     } else {
       fields.createdAt = Date.now();
-      await addDoc(collection(db, MEM_COL), fields);
-      setNotifSeen(Date.now());
+      var newRef = await addDoc(collection(db, MEM_COL), fields);
+      addRead("post:" + newRef.id);
       closeAdd(); toast("추억을 간직했어요 ♥");
     }
   } catch (e) {
@@ -1726,11 +1728,19 @@ function getSeen(id) { try { return parseInt(localStorage.getItem("seen_" + id) 
 function setSeen(id, n) { try { localStorage.setItem("seen_" + id, String(n)); } catch (e) {} }
 function getNotifSeen() { try { return parseInt(localStorage.getItem("notif_seen") || "0", 10) || 0; } catch (e) { return 0; } }
 function setNotifSeen(t) { try { localStorage.setItem("notif_seen", String(t)); } catch (e) {} }
+function getReadSet() { try { return new Set(JSON.parse(localStorage.getItem("notif_read") || "[]")); } catch (e) { return new Set(); } }
+function saveReadSet(s) { try { localStorage.setItem("notif_read", JSON.stringify(Array.from(s))); } catch (e) {} }
+function addRead(id) { var s = getReadSet(); s.add(id); saveReadSet(s); }
+function clearRead() { try { localStorage.removeItem("notif_read"); } catch (e) {} }
 function collectNewItems() {
-  var seen = getNotifSeen(), arr = [];
+  var seen = getNotifSeen(), read = getReadSet(), arr = [];
   memories.forEach(function (m) {
-    if ((m.createdAt || 0) > seen) arr.push({ kind: "post", time: m.createdAt || 0, m: m });
-    (m.comments || []).forEach(function (c) { if ((c.at || 0) > seen) arr.push({ kind: "comment", time: c.at || 0, m: m, c: c }); });
+    var pid = "post:" + m.id;
+    if ((m.createdAt || 0) > seen && !read.has(pid)) arr.push({ kind: "post", id: pid, time: m.createdAt || 0, m: m });
+    (m.comments || []).forEach(function (c) {
+      var cid = "cmt:" + m.id + ":" + cidOf(c);
+      if ((c.at || 0) > seen && !read.has(cid)) arr.push({ kind: "comment", id: cid, time: c.at || 0, m: m, c: c });
+    });
   });
   arr.sort(function (a, b) { return b.time - a.time; });
   return arr;
@@ -1756,12 +1766,13 @@ function renderNotif() {
       desc = (it.c.text || "") + "  —  " + (stripTags(it.m.title) || "추억");
     }
     el.innerHTML = '<span class="notif-ico">' + ico + '</span><div class="notif-main"><div class="notif-t">' + title + '</div><div class="notif-d">' + esc(desc) + '</div><div class="notif-when">' + esc(fmtCommentTime(it.time)) + '</div></div>';
-    el.onclick = function () { closeNotif(); openDetail(it.m); };
+    el.onclick = function () { addRead(it.id); closeNotif(); openDetail(it.m); };
     box.appendChild(el);
   });
 }
 function openNotif() { renderNotif(); $("notifOverlay").classList.add("active"); document.body.style.overflow = "hidden"; }
-function closeNotif() { $("notifOverlay").classList.remove("active"); document.body.style.overflow = ""; setNotifSeen(Date.now()); updateNotifBadge(); }
+function closeNotif() { $("notifOverlay").classList.remove("active"); document.body.style.overflow = ""; updateNotifBadge(); }
+function markAllRead() { setNotifSeen(Date.now()); clearRead(); renderNotif(); updateNotifBadge(); }
 async function toggleFav(m) {
   try { await updateDoc(doc(db, MEM_COL, m.id), { fav: !m.fav }); }
   catch (e) { toast("변경하지 못했어요."); }
@@ -2012,9 +2023,9 @@ async function addComment() {
   var ref = doc(db, MEM_COL, detailCurrent.id);
   try {
     await updateDoc(ref, { comments: arrayUnion(c) });
-    setNotifSeen(Date.now());
+    addRead("cmt:" + detailCurrent.id + ":" + c.cid);
   } catch (e) {
-    try { await setDoc(ref, { comments: commentsOf(detailCurrent).concat([c]) }, { merge: true }); setNotifSeen(Date.now()); }
+    try { await setDoc(ref, { comments: commentsOf(detailCurrent).concat([c]) }, { merge: true }); addRead("cmt:" + detailCurrent.id + ":" + c.cid); }
     catch (e2) { $("commentSend").disabled = false; toast("댓글을 남기지 못했어요."); return; }
   }
   $("commentText").value = ""; autoGrow($("commentText"));
@@ -2028,9 +2039,9 @@ async function addReply() {
   var ref = doc(db, MEM_COL, detailCurrent.id);
   try {
     await updateDoc(ref, { comments: arrayUnion(c) });
-    setNotifSeen(Date.now());
+    addRead("cmt:" + detailCurrent.id + ":" + c.cid);
   } catch (e) {
-    try { await setDoc(ref, { comments: commentsOf(detailCurrent).concat([c]) }, { merge: true }); setNotifSeen(Date.now()); }
+    try { await setDoc(ref, { comments: commentsOf(detailCurrent).concat([c]) }, { merge: true }); addRead("cmt:" + detailCurrent.id + ":" + c.cid); }
     catch (e2) { toast("답글을 남기지 못했어요."); return; }
   }
   replyingTo = null;
@@ -2300,6 +2311,7 @@ function init() {
   $("bucketBtn").onclick = openBucket;
   $("notifBtn").onclick = openNotif;
   $("notifClose").onclick = closeNotif;
+  $("notifReadAll").onclick = markAllRead;
   $("notifOverlay").addEventListener("click", function (e) { if (e.target === this) closeNotif(); });
   $("moodToggle").onclick = function () { $("moodPicker").classList.toggle("collapsed"); this.classList.toggle("open"); };
   enableGalleryDrag($("detailGallery"));
