@@ -145,9 +145,10 @@
   .icon-btn { background: transparent; border: 1px solid rgba(170,130,185,.2); color: var(--cream-dim); width: 46px; height: 46px; padding: 0; display: grid; place-items: center; border-radius: 12px; }
   .icon-btn:hover { border-color: var(--gold); color: var(--gold-soft); }
 
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 22px; }
+  .grid { column-width: 270px; column-gap: 22px; }
+  .grid > * { break-inside: avoid; margin-bottom: 22px; }
   .stack { position: relative; }
-  .stack.collapsed { margin-bottom: 16px; }
+  .stack.collapsed { margin-bottom: 22px; }
   .stack.collapsed .card { position: relative; z-index: 2; }
   .stack-deco { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: var(--card); border: 1px solid var(--card-edge); border-radius: 18px; box-shadow: var(--shadow); }
   .stack-deco.deco1 { transform: translateY(7px) scale(.972); z-index: 1; opacity: .8; }
@@ -355,10 +356,9 @@
   .comment-item { display:flex; flex-direction:column; gap:3px; padding:10px 12px; background:rgba(255,255,255,.55); border:1px solid var(--card-edge); border-radius:12px; }
   .comment-item .c-head { display:flex; align-items:center; gap:8px; }
   .comment-item .c-author { font-family:var(--sans); font-size:12.5px; font-weight:700; color:var(--ink); }
-  .comment-item .c-time { font-size:11px; color:var(--text-dim); }
-  .comment-item .c-del { margin-left:auto; background:none; border:none; color:var(--text-dim); font-size:11px; cursor:pointer; padding:2px 4px; opacity:.6; }
-  .comment-item .c-reply-btn { margin-left:auto; background:none; border:none; color:var(--blue); font-size:11.5px; cursor:pointer; font-family:var(--sans); padding:2px 4px; font-weight:600; }
-  .comment-item .c-reply-btn + .c-del { margin-left:0; }
+  .comment-item .c-time { font-size:11px; color:var(--text-dim); margin-right:auto; }
+  .comment-item .c-del { background:none; border:none; color:var(--text-dim); font-size:11px; cursor:pointer; padding:2px 4px; opacity:.6; }
+  .comment-item .c-reply-btn { background:none; border:none; color:var(--blue); font-size:11.5px; cursor:pointer; font-family:var(--sans); padding:2px 4px; font-weight:600; }
   .comment-item .c-reply-btn:hover { text-decoration:underline; }
   .reply-item { margin-left:20px; background:rgba(255,255,255,.4); border-left:2px solid var(--gold-soft); }
   .reply-item .c-author { color:var(--text); }
@@ -366,7 +366,6 @@
   .reply-input { flex:1; min-width:0; resize:none; border:1px solid var(--card-edge); border-radius:12px; padding:8px 10px; font-size:13px; font-family:var(--sans); color:var(--text); background:#fff; outline:none; line-height:1.4; }
   .reply-send { flex-shrink:0; background:var(--gold); border:none; color:#fff; border-radius:12px; padding:0 14px; font-size:13px; font-weight:700; font-family:var(--sans); cursor:pointer; }
   .comment-item .c-edit-btn { background:none; border:none; color:var(--text-dim); font-size:11px; cursor:pointer; padding:2px 4px; opacity:.7; }
-  .comment-item .c-edit-btn:not(.c-reply-btn + .c-edit-btn) { margin-left:auto; }
   .comment-item .c-edit-btn:hover { opacity:1; }
   .c-edited { font-size:10.5px; color:var(--text-dim); opacity:.7; }
   .c-edit-form { display:flex; gap:6px; margin-top:5px; }
