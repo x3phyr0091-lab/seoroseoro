@@ -1088,7 +1088,9 @@ function updateBioUI() {
   area.style.display = "block";
   var has = !!localStorage.getItem("bio_cred_id");
   $("bioUnlockBtn").style.display = has ? "block" : "none";
-  $("bioRegisterBtn").style.display = has ? "none" : "block";
+  var reg = $("bioRegisterBtn");
+  reg.style.display = "block";
+  reg.textContent = has ? "📲 지문·Face ID 다시 등록" : "📲 이 기기에 Face ID·지문 등록";
 }
 async function registerBio() {
   var pin = readPins($("lockPins")), err = $("lockErr");
@@ -1127,7 +1129,13 @@ async function autoBio() {
   if (!localStorage.getItem("bio_cred_id") || !window.PublicKeyCredential) return;
   var ok = await tryBio();
   if (ok) return;
-  if (confirm("Face ID·지문으로 다시 시도할까요?\n취소하면 암호로 들어갈 수 있어요.")) { await tryBio(); }
+  if (confirm("지문·Face ID로 다시 시도할까요?\n취소하면 암호로 들어갈 수 있어요.")) {
+    var ok2 = await tryBio();
+    if (ok2) return;
+    try { localStorage.removeItem("bio_cred_id"); } catch (e) {}
+    updateBioUI();
+    toast("지문 정보가 만료된 것 같아요. 암호로 들어와 다시 등록해 주세요.");
+  }
 }
 
 /* ---------- main ---------- */
