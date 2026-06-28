@@ -1028,7 +1028,6 @@ async function boot() {
     show("lock");
     updateBioUI();
     setTimeout(function () { var el = $("lockPins").querySelector("input"); if (el) el.focus(); }, 300);
-    if (localStorage.getItem("bio_cred_id")) setTimeout(autoBio, 500);
   }
   try {
     onSnapshot(doc(db, SETTINGS_DOC[0], SETTINGS_DOC[1]), function (snap) {
