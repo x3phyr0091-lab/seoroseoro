@@ -107,6 +107,10 @@
   .notif-badge.hide { display:none; }
   .notif-readall { margin-left:auto; margin-right:10px; background:rgba(232,138,180,.14); border:1px solid var(--gold); color:#9a5346; border-radius:999px; padding:5px 13px; font-size:12.5px; font-weight:700; font-family:var(--sans); cursor:pointer; }
   .notif-readall:hover { background:rgba(232,138,180,.26); }
+  .date-range-input { display:flex; align-items:center; gap:8px; }
+  .date-range-input input { flex:1; min-width:0; }
+  .dr-tilde { color:var(--text-dim); flex-shrink:0; font-size:14px; }
+  .dr-hint { font-size:11.5px; color:var(--text-dim); margin-top:5px; font-family:var(--sans); }
   .notif-list { display:flex; flex-direction:column; gap:10px; }
   .notif-empty { text-align:center; color:var(--text-dim); padding:34px 10px; font-family:var(--sans); font-size:14px; }
   .notif-item { display:flex; gap:10px; align-items:flex-start; padding:12px 14px; border-radius:14px; background:rgba(255,255,255,.6); border:1px solid var(--card-edge); cursor:pointer; text-align:left; width:100%; }
@@ -147,10 +151,9 @@
   .icon-btn { background: transparent; border: 1px solid rgba(170,130,185,.2); color: var(--cream-dim); width: 46px; height: 46px; padding: 0; display: grid; place-items: center; border-radius: 12px; }
   .icon-btn:hover { border-color: var(--gold); color: var(--gold-soft); }
 
-  .grid { column-width: 270px; column-gap: 22px; }
-  .grid > * { break-inside: avoid; margin-bottom: 22px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 22px; align-items: start; }
   .stack { position: relative; }
-  .stack.collapsed { margin-bottom: 22px; }
+  .stack.collapsed { margin-bottom: 16px; }
   .stack.collapsed .card { position: relative; z-index: 2; }
   .stack-deco { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: var(--card); border: 1px solid var(--card-edge); border-radius: 18px; box-shadow: var(--shadow); }
   .stack-deco.deco1 { transform: translateY(7px) scale(.972); z-index: 1; opacity: .8; }
@@ -729,7 +732,7 @@
         <input type="file" id="photoInput" accept="image/*" multiple style="display:none" />
       </div>
       <div class="row2">
-        <div class="field"><label>날짜</label><input type="date" id="memDate" /></div>
+        <div class="field"><label>날짜</label><div class="date-range-input"><input type="date" id="memDate" /><span class="dr-tilde">~</span><input type="date" id="memEndDate" /></div><div class="dr-hint">여러 날에 걸친 추억이면 끝나는 날도 골라요 (선택)</div></div>
         <div class="field"><label>장소 (선택)</label><input type="text" id="memPlace" placeholder="예) 왕송호수" maxlength="40" /></div>
       </div>
       <div class="rich-toolbar" id="richToolbar">
@@ -953,6 +956,7 @@ function show(id) { var s = document.querySelectorAll(".screen"); for (var i = 0
 function toast(msg) { var t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._tm); t._tm = setTimeout(function () { t.classList.remove("show"); }, 2400); }
 function todayStr() { var d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
 function fmtDate(iso) { if (!iso) return ""; var p = iso.split("-"); if (p.length !== 3) return iso; return p[0] + ". " + Number(p[1]) + ". " + Number(p[2]) + "."; }
+function fmtDateRange(m) { if (m && m.endDate && m.endDate !== m.date) return fmtDate(m.date) + " ~ " + fmtDate(m.endDate); return fmtDate(m && m.date); }
 function stripTime(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
 
 function daysTogether() {
@@ -1239,7 +1243,7 @@ function makeCardEl(m, i) {
   var cn = commentsOf(m).length, seen = getSeen(m.id);
   var commentHtml = cn > 0 ? '<span class="cmt-count">💬 ' + cn + '</span>' : "";
   var newBadge = cn > seen ? '<span class="new-badge">새 댓글 ' + (cn - seen) + '</span>' : "";
-  card.innerHTML = photoHtml + favBtn + '<div class="body"><div class="meta"><span class="date">' + esc(fmtDate(m.date)) + "</span>" + moodHtml + "</div><h3>" + titleHtml + "</h3>" + excerptHtml + '<div class="foot"><span class="author">' + esc(m.author || "") + "</span>" + placeHtml + commentHtml + newBadge + "</div></div>";
+  card.innerHTML = photoHtml + favBtn + '<div class="body"><div class="meta"><span class="date">' + esc(fmtDateRange(m)) + "</span>" + moodHtml + "</div><h3>" + titleHtml + "</h3>" + excerptHtml + '<div class="foot"><span class="author">' + esc(m.author || "") + "</span>" + placeHtml + commentHtml + newBadge + "</div></div>";
   card.onclick = function () { openDetail(m); };
   var favEl = card.querySelector(".fav-btn");
   if (favEl) favEl.onclick = function (e) { e.stopPropagation(); toggleFav(m); };
@@ -1364,6 +1368,7 @@ function openAdd(editMem) {
   $("addErr").textContent = "";
   if (editingId) {
     $("memDate").value = editMem.date || todayStr();
+    $("memEndDate").value = editMem.endDate || "";
     $("memPlace").value = editMem.place || "";
     $("memPw").value = editMem.pw || "";
     $("memTitle").innerHTML = editMem.title || "";
@@ -1375,7 +1380,7 @@ function openAdd(editMem) {
     $("photoDrop").textContent = "사진 불러오는 중…";
     loadPhotos(editMem).then(function (ps) { draftPhotos = ps; renderPhotoGrid(); $("photoDrop").textContent = dropLabel(); });
   } else {
-    $("memDate").value = todayStr(); $("memPlace").value = ""; $("memPw").value = "";
+    $("memDate").value = todayStr(); $("memEndDate").value = ""; $("memPlace").value = ""; $("memPw").value = "";
     $("memTitle").innerHTML = ""; $("memContent").innerHTML = "";
     draftPhotos = []; draftMoods = []; draftAuthor = null;
     renderPhotoGrid(); $("photoDrop").textContent = dropLabel();
@@ -1452,6 +1457,7 @@ async function saveMemory() {
   var title = titleText ? tEl.innerHTML : "";
   var content = contentText ? cEl.innerHTML : "";
   var date = $("memDate").value || todayStr(), place = $("memPlace").value.trim();
+  var endDate = $("memEndDate").value || "";
   var pw = ($("memPw").value || "").trim();
   var err = $("addErr");
   if (!titleText && !contentText) { err.textContent = "제목이나 이야기 중 하나는 적어주세요."; return; }
@@ -1467,7 +1473,7 @@ async function saveMemory() {
       photoIds.push(pref.id);
     }
     var cover = draftPhotos.length ? await makeThumb(draftPhotos[0]) : null;
-    var fields = { date: date, title: title, content: content, place: place, moods: draftMoods.slice(), author: draftAuthor || settings.name1, cover: cover, photoIds: photoIds, photoCount: draftPhotos.length, photos: [], pw: pw };
+    var fields = { date: date, endDate: endDate, title: title, content: content, place: place, moods: draftMoods.slice(), author: draftAuthor || settings.name1, cover: cover, photoIds: photoIds, photoCount: draftPhotos.length, photos: [], pw: pw };
     if (editing) {
       var old = memories.filter(function (x) { return x.id === editing; })[0];
       if (old && old.photoIds && old.photoIds.length) {
@@ -1553,7 +1559,7 @@ function openDetail(m) {
     });
   } else { wrap.style.display = "none"; gal.innerHTML = ""; }
   $("detailTitle").innerHTML = stripTags(m.title).trim() ? m.title : "(제목 없음)";
-  var meta = '<span class="date">' + esc(fmtDate(m.date)) + "</span>";
+  var meta = '<span class="date">' + esc(fmtDateRange(m)) + "</span>";
   if (m.place) meta += '<span>· ' + esc(m.place) + '</span>';
   $("detailMeta").innerHTML = meta;
   $("detailMoods").innerHTML = moodsOf(m).map(function (t) { var mo = MOODS.filter(function (x) { return x.t === t; })[0]; return mo ? '<span class="mood-chip">' + mo.e + " " + esc(t) + "</span>" : ""; }).join("");
