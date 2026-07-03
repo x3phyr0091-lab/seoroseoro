@@ -92,6 +92,8 @@
   .pin-row { display: flex; gap: 10px; justify-content: center; margin: 4px 0; }
   .pin-row input { width: 52px; height: 60px; text-align: center; font-size: 24px; font-family: var(--serif); background: rgba(255,255,255,.65); border: 1px solid rgba(170,130,185,.2); border-radius: 12px; color: var(--cream); }
   .pin-row input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(232,138,180,.16); }
+  .pin-row input::-webkit-outer-spin-button, .pin-row input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .pin-row input[type=number] { -moz-appearance: textfield; }
 
   .btn { -webkit-appearance: none; appearance: none; cursor: pointer; border: none; font-family: var(--sans); font-size: 15px; border-radius: 12px; padding: 13px 22px; transition: transform .15s, box-shadow .25s, background .25s, border-color .2s; }
   .btn-gold { width: 100%; background: linear-gradient(180deg, var(--gold-soft), var(--gold)); color: #ffffff; font-weight: 700; box-shadow: 0 10px 26px -12px rgba(232,138,180,.8); margin-top: 8px; }
@@ -546,8 +548,8 @@
     <div class="field"><label>우리가 시작한 날</label><input type="date" id="setDate" /></div>
     <div class="field"><label>둘만 아는 암호 (숫자 4자리)</label>
       <div class="pin-row" id="setupPins">
-        <input type="text" inputmode="numeric" maxlength="1" /><input type="text" inputmode="numeric" maxlength="1" />
-        <input type="text" inputmode="numeric" maxlength="1" /><input type="text" inputmode="numeric" maxlength="1" />
+        <input type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="9" maxlength="1" autocomplete="off" /><input type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="9" maxlength="1" autocomplete="off" />
+        <input type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="9" maxlength="1" autocomplete="off" /><input type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="9" maxlength="1" autocomplete="off" />
       </div>
     </div>
     <div class="err" id="setupErr"></div>
@@ -570,8 +572,8 @@
     <h1 id="lockTitle">다시 만났네요</h1>
     <p class="sub">둘만 아는 암호를 입력해주세요</p>
     <div class="pin-row" id="lockPins">
-      <input type="text" inputmode="numeric" maxlength="1" /><input type="text" inputmode="numeric" maxlength="1" />
-      <input type="text" inputmode="numeric" maxlength="1" /><input type="text" inputmode="numeric" maxlength="1" />
+      <input type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="9" maxlength="1" autocomplete="off" /><input type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="9" maxlength="1" autocomplete="off" />
+      <input type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="9" maxlength="1" autocomplete="off" /><input type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="9" maxlength="1" autocomplete="off" />
     </div>
     <div class="err" id="lockErr"></div>
     <button class="btn btn-gold" id="lockBtn">들어가기</button>
@@ -978,7 +980,7 @@ function wirePins(container) {
   for (var i = 0; i < inputs.length; i++) {
     (function (idx) {
       var el = inputs[idx];
-      el.addEventListener("input", function () { el.value = el.value.replace(/\D/g, ""); if (el.value && idx < inputs.length - 1) inputs[idx + 1].focus(); });
+      el.addEventListener("input", function () { el.value = el.value.replace(/\D/g, "").slice(-1); if (el.value && idx < inputs.length - 1) inputs[idx + 1].focus(); });
       el.addEventListener("keydown", function (e) { if (e.key === "Backspace" && !el.value && idx > 0) inputs[idx - 1].focus(); });
     })(i);
   }
