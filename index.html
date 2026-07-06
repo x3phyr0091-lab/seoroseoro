@@ -269,6 +269,11 @@
   .photo-preview img { width: 100%; display: block; max-height: 280px; object-fit: cover; }
   .photo-preview .remove { position: absolute; top: 8px; right: 8px; background: rgba(20,15,25,.8); color: #fff; border: none; cursor: pointer; width: 30px; height: 30px; border-radius: 50%; font-size: 16px; }
   .save-row { display: flex; gap: 10px; margin-top: 8px; }
+  .btn-ghost { flex: 0 0 auto; background: rgba(255,255,255,.5); border: 1px solid var(--card-edge); color: var(--text-dim); font-family: var(--sans); font-weight: 600; border-radius: 14px; padding: 0 16px; cursor: pointer; }
+  .btn-ghost:hover { border-color: var(--gold); color: var(--ink); }
+  .save-row .btn-gold { flex: 1; }
+  .draft-tag { font-size: 11.5px; color: var(--gold); font-family: var(--sans); font-weight: 700; opacity: 0; transition: opacity .3s; margin-left: 8px; margin-right: auto; }
+  .draft-tag.show { opacity: 1; }
   .save-row .btn-gold { margin-top: 0; }
   .detail-photo { width: 100%; max-height: 360px; object-fit: cover; display: block; }
   .detail-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--text-dim); margin-bottom: 12px; }
@@ -720,7 +725,7 @@
 
 <div class="overlay" id="addOverlay">
   <div class="modal" role="dialog" aria-modal="true">
-    <div class="modal-head"><h2 id="addTitle">오늘의 추억</h2><button class="x" id="addClose" aria-label="닫기">×</button></div>
+    <div class="modal-head"><h2 id="addTitle">오늘의 추억</h2><span class="draft-tag" id="draftTag"></span><button class="x" id="addClose" aria-label="닫기">×</button></div>
     <div class="modal-body">
       <div class="field">
         <div class="photo-drop" id="photoDrop">📷 사진 더하기 (여러 장 가능, 선택)</div>
@@ -833,7 +838,7 @@
       <div class="field"><label>누가 적나요</label><div class="authors" id="authorPicker"></div></div>
       <div class="err" id="addErr" style="color:var(--rose);font-size:13px;min-height:0"></div>
       <div class="field"><label>수정·삭제 잠금 (선택)</label><input type="text" id="memPw" placeholder="비밀번호를 정하면, 나중에 고치거나 지울 때 입력해요" maxlength="20" /></div>
-      <div class="save-row"><button class="btn btn-gold" id="saveBtn">간직하기</button></div>
+      <div class="save-row"><button class="btn btn-ghost" id="draftSaveBtn" type="button">💾 임시저장</button><button class="btn btn-gold" id="saveBtn">간직하기</button></div>
     </div>
   </div>
 </div>
@@ -1114,7 +1119,7 @@ function buildAuthorPicker() {
   [settings.name1, settings.name2].forEach(function (name) {
     var b = document.createElement("div");
     b.className = "author-pick"; b.textContent = name;
-    b.onclick = function () { var all = p.querySelectorAll(".author-pick"); for (var i = 0; i < all.length; i++) all[i].classList.remove("sel"); b.classList.add("sel"); draftAuthor = name; };
+    b.onclick = function () { var all = p.querySelectorAll(".author-pick"); for (var i = 0; i < all.length; i++) all[i].classList.remove("sel"); b.classList.add("sel"); draftAuthor = name; scheduleDraftSave(); };
     p.appendChild(b);
   });
 }
@@ -1134,6 +1139,7 @@ function buildMoodPicker() {
       if (idx > -1) { draftMoods.splice(idx, 1); b.classList.remove("sel"); }
       else { draftMoods.push(m.t); b.classList.add("sel"); }
       updateMoodSummary();
+      scheduleDraftSave();
     };
     p.appendChild(b);
   });
@@ -1353,6 +1359,13 @@ function openAdd(editMem) {
     $("memTitle").innerHTML = ""; $("memContent").innerHTML = "";
     draftPhotos = []; draftMoods = []; draftAuthor = null;
     renderPhotoGrid(); $("photoDrop").textContent = dropLabel();
+    var d = getDraft();
+    if (d && !d.editingId) {
+      var when = fmtWriteTime ? fmtWriteTime(d.savedAt) : "";
+      if (confirm("이어서 쓰던 임시저장 글이 있어요" + (when ? " (" + when + ")" : "") + ".\n불러올까요?")) {
+        applyDraftToForm(d);
+      } else { clearDraft(); }
+    }
   }
   $("photoInput").value = "";
   if ($("charPalette")) $("charPalette").style.display = "none";
@@ -1364,6 +1377,40 @@ function openAdd(editMem) {
   $("addOverlay").classList.add("active"); document.body.style.overflow = "hidden";
 }
 function closeAdd() { $("addOverlay").classList.remove("active"); document.body.style.overflow = ""; }
+
+var DRAFT_KEY = "mem_draft_v1";
+var draftSaveTimer = null;
+function draftSnapshot() {
+  return {
+    editingId: editingId,
+    date: $("memDate").value, endDate: $("memEndDate").value,
+    place: $("memPlace").value, pw: $("memPw").value,
+    title: $("memTitle").innerHTML, content: $("memContent").innerHTML,
+    moods: draftMoods.slice(), author: draftAuthor,
+    savedAt: Date.now()
+  };
+}
+function scheduleDraftSave() {
+  clearTimeout(draftSaveTimer);
+  draftSaveTimer = setTimeout(function () {
+    var s = draftSnapshot();
+    var empty = !s.title.trim() && !stripTags(s.content).trim() && !s.place.trim() && !s.moods.length;
+    if (empty && !editingId) { clearDraft(); return; }
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(s)); showDraftSavedTag(); } catch (e) {}
+  }, 600);
+}
+function clearDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch (e) {} $("draftTag").classList.remove("show"); }
+function getDraft() { try { var s = localStorage.getItem(DRAFT_KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
+function showDraftSavedTag() {
+  var t = $("draftTag"); t.textContent = "💾 임시저장됨"; t.classList.add("show");
+  clearTimeout(t._hideT); t._hideT = setTimeout(function () { t.classList.remove("show"); }, 1600);
+}
+function applyDraftToForm(d) {
+  $("memDate").value = d.date || todayStr(); $("memEndDate").value = d.endDate || "";
+  $("memPlace").value = d.place || ""; $("memPw").value = d.pw || "";
+  $("memTitle").innerHTML = d.title || ""; $("memContent").innerHTML = d.content || "";
+  draftMoods = (d.moods || []).slice(); draftAuthor = d.author || null;
+}
 
 var TOTAL_PHOTO_LIMIT = 950000; // 한 추억의 모든 사진 합계 한도(바이트). Firestore 1MB 문서 여유분.
 function curPhotoBytes() { var s = 0; for (var i = 0; i < draftPhotos.length; i++) s += draftPhotos[i].length * 0.75; return s; }
@@ -1449,11 +1496,13 @@ async function saveMemory() {
         for (var j = 0; j < old.photoIds.length; j++) { try { await deleteDoc(doc(db, PHOTO_COL, old.photoIds[j])); } catch (e) {} }
       }
       await updateDoc(doc(db, MEM_COL, editing), fields);
+      clearDraft();
       closeAdd(); toast("추억을 수정했어요 ♥");
     } else {
       fields.createdAt = Date.now();
       var newRef = await addDoc(collection(db, MEM_COL), fields);
       addRead("post:" + newRef.id);
+      clearDraft();
       closeAdd(); toast("추억을 간직했어요 ♥");
     }
   } catch (e) {
@@ -2098,6 +2147,11 @@ function init() {
   $("openAddBtn").onclick = openAdd;
   $("addClose").onclick = closeAdd;
   $("saveBtn").onclick = saveMemory;
+  $("draftSaveBtn").onclick = function () { clearTimeout(draftSaveTimer); try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draftSnapshot())); showDraftSavedTag(); } catch (e) {} };
+  ["memTitle", "memContent", "memPlace", "memDate", "memEndDate", "memPw"].forEach(function (id) {
+    var el = $(id);
+    if (el) el.addEventListener("input", scheduleDraftSave);
+  });
   $("lockNowBtn").onclick = function () { show("lock"); clearPins($("lockPins")); $("lockErr").textContent = ""; };
   $("exportBtn").onclick = exportAll;
   $("importBtn").onclick = function () { $("importInput").click(); };
