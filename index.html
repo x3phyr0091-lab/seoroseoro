@@ -494,7 +494,8 @@
   /* ===== 사진 여러 장 ===== */
   .photo-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:10px; }
   .photo-grid:empty { display:none; }
-  .photo-thumb { position:relative; aspect-ratio:1/1; border-radius:10px; overflow:hidden; border:1px solid rgba(232,138,180,.2); }
+  .photo-thumb { position:relative; aspect-ratio:1/1; border-radius:10px; overflow:hidden; border:1px solid rgba(232,138,180,.2); cursor:grab; }
+  .photo-thumb img { -webkit-user-drag:none; user-select:none; }
   .photo-thumb .drag-handle { position:absolute; left:4px; bottom:4px; width:26px; height:26px; border-radius:8px; background:rgba(0,0,0,.42); color:#fff; font-size:14px; display:flex; align-items:center; justify-content:center; cursor:grab; touch-action:none; user-select:none; }
   .photo-thumb.drag-src { opacity:.45; }
   .photo-thumb.drag-over { outline:3px solid var(--gold); outline-offset:-3px; }
@@ -990,6 +991,21 @@ function nextMilestone() {
 }
 
 /* ---------- pin inputs ---------- */
+function pinPress(container, key) {
+  var inputs = container.querySelectorAll("input");
+  if (key === "del") {
+    var last = -1;
+    for (var i = 0; i < inputs.length; i++) if (inputs[i].value) last = i;
+    if (last >= 0) { inputs[last].value = ""; inputs[last].classList.remove("filled"); }
+    return false;
+  }
+  var idx = -1;
+  for (var j = 0; j < inputs.length; j++) if (!inputs[j].value) { idx = j; break; }
+  if (idx === -1) return true;
+  inputs[idx].value = key; inputs[idx].classList.add("filled");
+  for (var k = 0; k < inputs.length; k++) if (!inputs[k].value) return false;
+  return true;
+}
 function buildKeypad(padEl, container, onFilled) {
   var keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "del"];
   padEl.innerHTML = "";
@@ -999,21 +1015,8 @@ function buildKeypad(padEl, container, onFilled) {
     if (k === "del") { b.className = "kp-del"; b.textContent = "지우기"; }
     else b.textContent = k;
     b.onclick = function () {
-      var inputs = container.querySelectorAll("input");
-      var idx = -1;
-      for (var i = 0; i < inputs.length; i++) { if (!inputs[i].value) { idx = i; break; } }
-      if (k === "del") {
-        var lastFilled = -1;
-        for (var i2 = 0; i2 < inputs.length; i2++) { if (inputs[i2].value) lastFilled = i2; }
-        if (lastFilled >= 0) { inputs[lastFilled].value = ""; inputs[lastFilled].classList.remove("filled"); }
-        return;
-      }
-      if (idx === -1) return;
-      inputs[idx].value = k; inputs[idx].classList.add("filled");
-      if (idx < inputs.length - 1) { /* stay visually, just filled */ }
-      var full = true;
-      for (var j = 0; j < inputs.length; j++) { if (!inputs[j].value) full = false; }
-      if (full && onFilled) setTimeout(onFilled, 80);
+      var full = pinPress(container, k);
+      if (full && k !== "del" && onFilled) setTimeout(onFilled, 80);
     };
     padEl.appendChild(b);
   });
@@ -1464,11 +1467,15 @@ function renderPhotoGrid() {
   var g = $("photoGrid"); g.innerHTML = "";
   draftPhotos.forEach(function (b64, idx) {
     var d = document.createElement("div"); d.className = "photo-thumb"; d.dataset.idx = idx;
-    var im = document.createElement("img"); im.src = b64; im.alt = "";
+    var im = document.createElement("img"); im.src = b64; im.alt = ""; im.draggable = false;
     var rm = document.createElement("button"); rm.className = "remove"; rm.type = "button"; rm.textContent = "×"; rm.setAttribute("aria-label", "사진 빼기");
     rm.onclick = function () { draftPhotos.splice(idx, 1); renderPhotoGrid(); };
     var hd = document.createElement("div"); hd.className = "drag-handle"; hd.textContent = "⠿";
-    hd.addEventListener("pointerdown", function (e) { startPhotoDrag(e, d, idx); });
+    d.addEventListener("pointerdown", function (e) {
+      if (e.target.closest(".remove")) return;
+      if (e.pointerType === "mouse") { startPhotoDrag(e, d, idx); }
+      else if (e.target.closest(".drag-handle")) { startPhotoDrag(e, d, idx); }
+    });
     d.appendChild(im); d.appendChild(rm); d.appendChild(hd); g.appendChild(d);
   });
 }
@@ -2175,7 +2182,23 @@ function init() {
   buildKeypad($("lockKeypad"), $("lockPins"), doUnlock);
   $("setupBtn").onclick = doSetup;
   $("lockBtn").onclick = doUnlock;
-  $("lockPins").addEventListener("keydown", function (e) { if (e.key === "Enter") doUnlock(); });
+  document.addEventListener("keydown", function (e) {
+    var lockActive = $("lock").classList.contains("active");
+    var setupActive = $("setup").classList.contains("active");
+    if (!lockActive && !setupActive) return;
+    var ae = document.activeElement;
+    if (ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA") && !ae.readOnly) return;
+    var container = lockActive ? $("lockPins") : $("setupPins");
+    if (e.key >= "0" && e.key <= "9") {
+      e.preventDefault();
+      var full = pinPress(container, e.key);
+      if (full && lockActive) setTimeout(doUnlock, 80);
+    } else if (e.key === "Backspace") {
+      e.preventDefault(); pinPress(container, "del");
+    } else if (e.key === "Enter" && lockActive) {
+      e.preventDefault(); doUnlock();
+    }
+  });
   $("openAddBtn").onclick = openAdd;
   $("addClose").onclick = closeAdd;
   $("saveBtn").onclick = saveMemory;
