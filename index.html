@@ -499,7 +499,9 @@
   .photo-thumb .drag-handle { position:absolute; left:4px; bottom:4px; width:26px; height:26px; border-radius:8px; background:rgba(0,0,0,.42); color:#fff; font-size:14px; display:flex; align-items:center; justify-content:center; cursor:grab; touch-action:none; user-select:none; }
   .photo-thumb.drag-src { opacity:.45; }
   .photo-thumb.drag-over { outline:3px solid var(--gold); outline-offset:-3px; }
-  .photo-thumb:first-child::after { content:"대표"; position:absolute; left:4px; top:4px; background:rgba(232,138,180,.9); color:#fff; font-size:10px; font-weight:700; font-family:var(--sans); padding:2px 6px; border-radius:7px; }
+  .photo-thumb .cover-badge { position:absolute; left:4px; top:4px; background:rgba(232,138,180,.95); color:#fff; font-size:10.5px; font-weight:700; font-family:var(--sans); padding:3px 8px; border-radius:8px; border:none; cursor:default; }
+  .photo-thumb .cover-set { position:absolute; left:4px; top:4px; background:rgba(0,0,0,.45); color:#fff; font-size:10.5px; font-weight:600; font-family:var(--sans); padding:3px 8px; border-radius:8px; border:none; cursor:pointer; opacity:.85; }
+  .photo-thumb .cover-set:hover { background:rgba(232,138,180,.85); opacity:1; }
   .photo-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
   .photo-thumb .remove { position:absolute; top:4px; right:4px; width:22px; height:22px; border:none; border-radius:50%;
     background:rgba(0,0,0,.6); color:#fff; cursor:pointer; font-size:14px; line-height:1; display:flex; align-items:center; justify-content:center; }
@@ -903,7 +905,7 @@ let db = null;
 let settings = null;
 let memories = [];
 let memUnsub = null;
-let draftPhotos = [], draftMoods = [], draftAuthor = null, editingId = null;
+let draftPhotos = [], draftMoods = [], draftAuthor = null, editingId = null, draftCoverIdx = 0;
 
 const MOODS = [
   { e: "✨", t: "설렘" }, { e: "😊", t: "행복" }, { e: "❤️", t: "사랑" }, { e: "💗", t: "두근" },
@@ -1358,13 +1360,14 @@ function openAdd(editMem) {
     draftMoods = moodsOf(editMem).slice();
     draftAuthor = editMem.author || null;
     draftPhotos = [];
+    draftCoverIdx = editMem.coverIdx || 0;
     renderPhotoGrid();
     $("photoDrop").textContent = "사진 불러오는 중…";
     loadPhotos(editMem).then(function (ps) { draftPhotos = ps; renderPhotoGrid(); $("photoDrop").textContent = dropLabel(); });
   } else {
     $("memDate").value = todayStr(); $("memEndDate").value = ""; $("memPlace").value = ""; $("memPw").value = "";
     $("memTitle").innerHTML = ""; $("memContent").innerHTML = "";
-    draftPhotos = []; draftMoods = []; draftAuthor = null;
+    draftPhotos = []; draftMoods = []; draftAuthor = null; draftCoverIdx = 0;
     renderPhotoGrid(); $("photoDrop").textContent = dropLabel();
     var d = getDraft();
     if (d && !d.editingId) {
@@ -1465,18 +1468,27 @@ function handleFiles(files) {
 }
 function renderPhotoGrid() {
   var g = $("photoGrid"); g.innerHTML = "";
+  if (draftCoverIdx >= draftPhotos.length) draftCoverIdx = 0;
   draftPhotos.forEach(function (b64, idx) {
     var d = document.createElement("div"); d.className = "photo-thumb"; d.dataset.idx = idx;
     var im = document.createElement("img"); im.src = b64; im.alt = ""; im.draggable = false;
     var rm = document.createElement("button"); rm.className = "remove"; rm.type = "button"; rm.textContent = "×"; rm.setAttribute("aria-label", "사진 빼기");
-    rm.onclick = function () { draftPhotos.splice(idx, 1); renderPhotoGrid(); };
+    rm.onclick = function () {
+      draftPhotos.splice(idx, 1);
+      if (idx === draftCoverIdx) draftCoverIdx = 0;
+      else if (idx < draftCoverIdx) draftCoverIdx--;
+      renderPhotoGrid();
+    };
+    var cv = document.createElement("button"); cv.type = "button";
+    if (idx === draftCoverIdx) { cv.className = "cover-badge"; cv.textContent = "★ 대표"; }
+    else { cv.className = "cover-set"; cv.textContent = "대표로"; cv.onclick = function (e) { e.stopPropagation(); draftCoverIdx = idx; renderPhotoGrid(); }; }
     var hd = document.createElement("div"); hd.className = "drag-handle"; hd.textContent = "⠿";
     d.addEventListener("pointerdown", function (e) {
-      if (e.target.closest(".remove")) return;
+      if (e.target.closest(".remove") || e.target.closest(".cover-set")) return;
       if (e.pointerType === "mouse") { startPhotoDrag(e, d, idx); }
       else if (e.target.closest(".drag-handle")) { startPhotoDrag(e, d, idx); }
     });
-    d.appendChild(im); d.appendChild(rm); d.appendChild(hd); g.appendChild(d);
+    d.appendChild(im); d.appendChild(rm); d.appendChild(cv); d.appendChild(hd); g.appendChild(d);
   });
 }
 function startPhotoDrag(e, thumb, fromIdx) {
@@ -1500,6 +1512,13 @@ function startPhotoDrag(e, thumb, fromIdx) {
     if (toIdx !== null && toIdx !== fromIdx) {
       var item = draftPhotos.splice(fromIdx, 1)[0];
       draftPhotos.splice(toIdx, 0, item);
+      if (draftCoverIdx === fromIdx) draftCoverIdx = toIdx;
+      else {
+        var c = draftCoverIdx;
+        if (fromIdx < c) c--;
+        if (toIdx <= c) c++;
+        draftCoverIdx = c;
+      }
       renderPhotoGrid();
     }
   }
@@ -1529,8 +1548,9 @@ async function saveMemory() {
       var pref = await addDoc(collection(db, PHOTO_COL), { data: draftPhotos[i], order: i, createdAt: Date.now() });
       photoIds.push(pref.id);
     }
-    var cover = draftPhotos.length ? await makeThumb(draftPhotos[0]) : null;
-    var fields = { date: date, endDate: endDate, title: title, content: content, place: place, moods: draftMoods.slice(), author: draftAuthor || settings.name1, cover: cover, photoIds: photoIds, photoCount: draftPhotos.length, photos: [], pw: pw };
+    var ci = (draftCoverIdx >= 0 && draftCoverIdx < draftPhotos.length) ? draftCoverIdx : 0;
+    var cover = draftPhotos.length ? await makeThumb(draftPhotos[ci]) : null;
+    var fields = { date: date, endDate: endDate, title: title, content: content, place: place, moods: draftMoods.slice(), author: draftAuthor || settings.name1, cover: cover, coverIdx: ci, photoIds: photoIds, photoCount: draftPhotos.length, photos: [], pw: pw };
     if (editing) {
       var old = memories.filter(function (x) { return x.id === editing; })[0];
       if (old && old.photoIds && old.photoIds.length) {
