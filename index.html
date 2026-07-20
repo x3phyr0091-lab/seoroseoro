@@ -495,6 +495,10 @@
   .photo-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:10px; }
   .photo-grid:empty { display:none; }
   .photo-thumb { position:relative; aspect-ratio:1/1; border-radius:10px; overflow:hidden; border:1px solid rgba(232,138,180,.2); }
+  .photo-thumb .drag-handle { position:absolute; left:4px; bottom:4px; width:26px; height:26px; border-radius:8px; background:rgba(0,0,0,.42); color:#fff; font-size:14px; display:flex; align-items:center; justify-content:center; cursor:grab; touch-action:none; user-select:none; }
+  .photo-thumb.drag-src { opacity:.45; }
+  .photo-thumb.drag-over { outline:3px solid var(--gold); outline-offset:-3px; }
+  .photo-thumb:first-child::after { content:"대표"; position:absolute; left:4px; top:4px; background:rgba(232,138,180,.9); color:#fff; font-size:10px; font-weight:700; font-family:var(--sans); padding:2px 6px; border-radius:7px; }
   .photo-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
   .photo-thumb .remove { position:absolute; top:4px; right:4px; width:22px; height:22px; border:none; border-radius:50%;
     background:rgba(0,0,0,.6); color:#fff; cursor:pointer; font-size:14px; line-height:1; display:flex; align-items:center; justify-content:center; }
@@ -1459,12 +1463,42 @@ function handleFiles(files) {
 function renderPhotoGrid() {
   var g = $("photoGrid"); g.innerHTML = "";
   draftPhotos.forEach(function (b64, idx) {
-    var d = document.createElement("div"); d.className = "photo-thumb";
+    var d = document.createElement("div"); d.className = "photo-thumb"; d.dataset.idx = idx;
     var im = document.createElement("img"); im.src = b64; im.alt = "";
     var rm = document.createElement("button"); rm.className = "remove"; rm.type = "button"; rm.textContent = "×"; rm.setAttribute("aria-label", "사진 빼기");
     rm.onclick = function () { draftPhotos.splice(idx, 1); renderPhotoGrid(); };
-    d.appendChild(im); d.appendChild(rm); g.appendChild(d);
+    var hd = document.createElement("div"); hd.className = "drag-handle"; hd.textContent = "⠿";
+    hd.addEventListener("pointerdown", function (e) { startPhotoDrag(e, d, idx); });
+    d.appendChild(im); d.appendChild(rm); d.appendChild(hd); g.appendChild(d);
   });
+}
+function startPhotoDrag(e, thumb, fromIdx) {
+  e.preventDefault();
+  var g = $("photoGrid"), toIdx = null;
+  thumb.classList.add("drag-src");
+  try { thumb.setPointerCapture(e.pointerId); } catch (err) {}
+  function clearOver() { var o = g.querySelectorAll(".drag-over"); for (var i = 0; i < o.length; i++) o[i].classList.remove("drag-over"); }
+  function onMove(ev) {
+    ev.preventDefault();
+    var el = document.elementFromPoint(ev.clientX, ev.clientY);
+    var t = el ? el.closest(".photo-thumb") : null;
+    clearOver(); toIdx = null;
+    if (t && t !== thumb && t.parentNode === g) { t.classList.add("drag-over"); toIdx = parseInt(t.dataset.idx, 10); }
+  }
+  function onUp() {
+    thumb.removeEventListener("pointermove", onMove);
+    thumb.removeEventListener("pointerup", onUp);
+    thumb.removeEventListener("pointercancel", onUp);
+    thumb.classList.remove("drag-src"); clearOver();
+    if (toIdx !== null && toIdx !== fromIdx) {
+      var item = draftPhotos.splice(fromIdx, 1)[0];
+      draftPhotos.splice(toIdx, 0, item);
+      renderPhotoGrid();
+    }
+  }
+  thumb.addEventListener("pointermove", onMove);
+  thumb.addEventListener("pointerup", onUp);
+  thumb.addEventListener("pointercancel", onUp);
 }
 
 async function saveMemory() {
@@ -1983,7 +2017,6 @@ function buildCommentEl(c, isReply) {
     var form = document.createElement("div"); form.className = "c-edit-form";
     var ta = document.createElement("textarea"); ta.className = "c-edit-input"; ta.id = "editInput"; ta.rows = 1; ta.value = c.text || "";
     ta.addEventListener("input", function () { autoGrow(ta); });
-    ta.addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveCommentEdit(cidOf(c)); } });
     var save = document.createElement("button"); save.className = "c-edit-save"; save.type = "button"; save.textContent = "저장";
     save.onclick = function () { saveCommentEdit(cidOf(c)); };
     var cancel = document.createElement("button"); cancel.className = "c-edit-cancel"; cancel.type = "button"; cancel.textContent = "취소";
@@ -2003,7 +2036,6 @@ function buildReplyForm(parent) {
   var ta = document.createElement("textarea"); ta.id = "replyInput"; ta.rows = 1; ta.className = "reply-input";
   ta.placeholder = (parent.author || "") + "님에게 답글…";
   ta.addEventListener("input", function () { autoGrow(ta); });
-  ta.addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addReply(); } });
   var send = document.createElement("button"); send.type = "button"; send.className = "reply-send"; send.textContent = "등록";
   send.onclick = addReply;
   wrap.appendChild(ta); wrap.appendChild(send);
@@ -2367,7 +2399,6 @@ function init() {
   $("sizeRange").addEventListener("input", function () { $("sizeNum").textContent = this.value; });
   $("commentSend").onclick = addComment;
   $("commentText").addEventListener("input", function () { autoGrow(this); });
-  $("commentText").addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addComment(); } });
   var _addDownSelf = false, _detDownSelf = false;
   $("addOverlay").addEventListener("mousedown", function (e) { _addDownSelf = (e.target === this); });
   $("addOverlay").addEventListener("click", function (e) { if (e.target === this && _addDownSelf) closeAdd(); _addDownSelf = false; });
