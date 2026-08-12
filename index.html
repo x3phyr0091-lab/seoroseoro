@@ -54,7 +54,7 @@
     z-index: 0;
   }
 
-  .wrap { position: relative; z-index: 1; max-width: 920px; margin: 0 auto; padding: 0 20px 140px; }
+  .wrap { position: relative; z-index: 1; max-width: 920px; margin: 0 auto; padding: 0 20px 80px; }
 
   .flourish { display: flex; align-items: center; justify-content: center; gap: 14px; color: var(--gold); opacity: .85; }
   .flourish::before, .flourish::after { content: ""; height: 1px; width: 46px; background: linear-gradient(90deg, transparent, var(--gold)); }
@@ -304,11 +304,11 @@
   .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: #6fbf73; box-shadow: 0 0 8px rgba(111,191,115,.7); }
 
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
-  .tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: flex; justify-content: center; gap: 2px; background: rgba(255,255,255,.85); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-top: 1px solid rgba(232,138,180,.25); padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); }
-  .tabbar .tab { flex: 1; max-width: 96px; display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: none; padding: 5px 2px; border-radius: 12px; cursor: pointer; color: var(--text-dim); font-family: var(--sans); }
-  .tabbar .tab .t-ico { font-size: 19px; line-height: 1; }
-  .tabbar .tab .t-lb { font-size: 10.5px; font-weight: 700; }
-  .tabbar .tab.active { color: #d4508a; background: rgba(232,138,180,.14); }
+  .tabbar { position: sticky; top: 10px; z-index: 40; display: flex; justify-content: space-between; gap: 2px; background: rgba(255,255,255,.78); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(232,138,180,.28); border-radius: 18px; padding: 6px; margin: 12px 0 4px; box-shadow: 0 6px 22px rgba(190,120,170,.16); }
+  .tabbar .tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; padding: 7px 2px; border-radius: 13px; cursor: pointer; color: var(--text-dim); font-family: var(--sans); }
+  .tabbar .tab svg { width: 20px; height: 20px; }
+  .tabbar .tab .t-lb { font-size: 10.5px; font-weight: 700; letter-spacing: .02em; }
+  .tabbar .tab.active { color: #d4508a; background: rgba(232,138,180,.16); }
   .more-list { display: flex; flex-direction: column; gap: 8px; }
   .more-item { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 13px 14px; border-radius: 14px; border: 1px solid var(--card-edge); background: rgba(255,255,255,.6); color: var(--ink); font-family: var(--sans); font-size: 14.5px; font-weight: 600; cursor: pointer; }
   .more-item:hover { border-color: var(--gold); background: rgba(232,138,180,.08); }
@@ -345,7 +345,7 @@
   .react-btn { border: 1px solid var(--card-edge); background: rgba(255,255,255,.6); border-radius: 999px; padding: 6px 12px; font-size: 14px; cursor: pointer; font-family: var(--sans); color: var(--text); }
   .react-btn.mine { background: rgba(232,138,180,.2); border-color: var(--gold); font-weight: 700; }
   .react-mini { font-size: 11.5px; color: var(--text-dim); }
-  @media (max-width: 560px) { .wrap { padding: 0 14px 120px; } .grid { grid-template-columns: 1fr; gap: 18px; } header { padding: 36px 0 10px; } }
+  @media (max-width: 560px) { .wrap { padding: 0 14px 60px; } .grid { grid-template-columns: 1fr; gap: 18px; } header { padding: 36px 0 10px; } }
   /* ===== 서식 툴바 & 에디터 (v6) ===== */
   /* ===== 서식 툴바 & 에디터 ===== */
   .rich-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:1px; padding:6px 8px; margin-bottom:10px;
@@ -441,6 +441,26 @@
   .bucket-add input:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(232,138,180,.18); }
   .bucket-add button { flex-shrink:0; padding:0 18px; border:none; border-radius:12px; background:var(--gold); color:#ffffff; font-family:var(--sans); font-weight:700; font-size:14px; cursor:pointer; }
   .bucket-add button:hover { filter:brightness(1.06); }
+  .bucket-cats { display:flex; flex-wrap:wrap; gap:7px; margin:-8px 0 14px; }
+  .bucket-filter { display:flex; flex-wrap:wrap; gap:7px; margin:0 0 14px; padding-top:12px; border-top:1px dashed var(--card-edge); }
+  .bucket-filter button { border:1px solid var(--card-edge); background:rgba(255,255,255,.6); border-radius:999px; padding:6px 12px; font-size:12.5px; font-family:var(--sans); font-weight:700; color:var(--text-dim); cursor:pointer; }
+  .bucket-filter button.sel { background:rgba(111,159,224,.16); border-color:var(--blue); color:#3d6cae; }
+  .bucket-cats button { border:1px solid var(--card-edge); background:rgba(255,255,255,.6); border-radius:999px; padding:6px 12px; font-size:12.5px; font-family:var(--sans); font-weight:700; color:var(--text-dim); cursor:pointer; }
+  .bucket-cats button.sel { background:rgba(232,138,180,.18); border-color:var(--gold); color:#9a5346; }
+  .bucket-group { font-family:var(--sans); font-size:12.5px; font-weight:800; color:var(--gold); margin:16px 2px 8px; }
+  .bucket-group:first-child { margin-top:0; }
+  .bk-handle { margin-left:2px; flex-shrink:0; width:26px; height:26px; border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--text-dim); font-size:14px; cursor:grab; touch-action:none; user-select:none; }
+  .bucket-item { cursor:grab; }
+  .bucket-item.drag-src { opacity:.45; }
+  .bucket-item.drag-over { outline:2.5px solid var(--gold); outline-offset:-2px; }
+  .bucket-item .bucket-del { margin-left:0; flex-shrink:0; }
+  .bk-edit { background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:13px; padding:2px 4px; flex-shrink:0; margin-left:auto; }
+  .bk-edit:hover { color:var(--ink); }
+  .bucket-item.editing { flex-wrap:wrap; cursor:default; }
+  .bk-edit-input { flex:1 1 100%; min-width:0; padding:9px 11px; border:1px solid var(--gold); border-radius:10px; font-family:var(--serif); font-size:14px; color:var(--text); background:#fff; outline:none; }
+  .bk-edit-sel { flex:1; min-width:0; padding:8px; border-radius:10px; border:1px solid var(--card-edge); background:#fff; font-family:var(--sans); font-size:13px; color:var(--text); }
+  .bk-edit-save { padding:8px 14px; border:none; border-radius:10px; background:var(--gold); color:#fff; font-family:var(--sans); font-weight:700; font-size:13px; cursor:pointer; flex-shrink:0; }
+  .bk-edit-cancel { padding:8px 12px; border:1px solid var(--card-edge); border-radius:10px; background:none; color:var(--text-dim); font-family:var(--sans); font-size:13px; cursor:pointer; flex-shrink:0; }
   .bucket-list { display:flex; flex-direction:column; gap:8px; }
   .bucket-item { display:flex; align-items:center; gap:12px; padding:13px 15px; background:rgba(255,255,255,.55); border:1px solid var(--card-edge); border-radius:14px; }
   .bucket-check { flex-shrink:0; width:24px; height:24px; border-radius:50%; border:2px solid var(--card-edge); cursor:pointer; display:flex; align-items:center; justify-content:center; color:#fff; font-size:14px; transition:all .15s; }
@@ -644,6 +664,13 @@
 <!-- ============ MAIN ============ -->
 <section id="main" class="screen">
   <div class="wrap">
+    <nav class="tabbar" id="tabbar">
+      <button class="tab active" id="tabHome" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg><span class="t-lb">홈</span></button>
+      <button class="tab" id="tabCal" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span class="t-lb">달력</span></button>
+      <button class="tab" id="tabPlan" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="t-lb">일정</span></button>
+      <button class="tab" id="tabBucket" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span class="t-lb">버킷</span></button>
+      <button class="tab" id="tabMore" type="button"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg><span class="t-lb">더보기</span></button>
+    </nav>
     <header>
       <div class="logo-wrap">
         <svg class="logo-svg" viewBox="0 0 300 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="서로서로">
@@ -684,13 +711,6 @@
     </div>
     <div id="listArea"></div>
     <div class="pager" id="pager" style="display:none"></div>
-    <nav class="tabbar" id="tabbar">
-      <button class="tab active" id="tabHome" type="button"><span class="t-ico">🏠</span><span class="t-lb">홈</span></button>
-      <button class="tab" id="tabCal" type="button"><span class="t-ico">📆</span><span class="t-lb">달력</span></button>
-      <button class="tab" id="tabPlan" type="button"><span class="t-ico">⏰</span><span class="t-lb">일정</span></button>
-      <button class="tab" id="tabBucket" type="button"><span class="t-ico">✅</span><span class="t-lb">버킷</span></button>
-      <button class="tab" id="tabMore" type="button"><span class="t-ico">➕</span><span class="t-lb">더보기</span></button>
-    </nav>
   </div>
 </section>
 
@@ -717,9 +737,10 @@
     <div class="modal-body">
       <p class="bucket-sub">둘이 함께 이루고 싶은 것들을 적어보세요. 이루면 동그라미를 눌러 체크해요.</p>
       <div class="bucket-add">
-        <input type="text" id="bucketInput" placeholder="예) 같이 오로라 보러 가기" maxlength="80" />
+        <input type="text" id="bucketInput" placeholder="예) 같이 오로라 보러 가기 (선택한 분류로 들어가요)" maxlength="80" />
         <button type="button" id="bucketAddBtn">추가</button>
       </div>
+      <div class="bucket-filter" id="bucketFilterRow"></div>
       <div class="bucket-list" id="bucketList"></div>
     </div>
   </div>
@@ -1874,12 +1895,34 @@ function closeMore() { $("moreOverlay").classList.remove("active"); document.bod
 var BUCKET_COL = "bucket";
 var bucketItems = [];
 var bucketUnsub = null;
+var BUCKET_CATS = [
+  { k: "watch", e: "🎬", t: "볼 것" }, { k: "do", e: "🎯", t: "할 것" },
+  { k: "go", e: "📍", t: "갈 것" }, { k: "eat", e: "🍽️", t: "먹을 것" }, { k: "etc", e: "✨", t: "기타" }
+];
+var bucketCat = "etc";
+var editingBucketId = null;
+var bucketFilter = "all";
+function buildBucketFilter() {
+  var box = $("bucketFilterRow"); if (!box) return;
+  box.innerHTML = "";
+  var opts = [{ k: "all", e: "🗂️", t: "전체" }].concat(BUCKET_CATS);
+  opts.forEach(function (c) {
+    var b = document.createElement("button"); b.type = "button";
+    b.textContent = c.e + " " + c.t;
+    if (c.k === bucketFilter) b.className = "sel";
+    b.onclick = function () { bucketFilter = c.k; buildBucketFilter(); renderBucket(); };
+    box.appendChild(b);
+  });
+}
+function catOf(it) { var k = it && it.cat; return BUCKET_CATS.some(function (c) { return c.k === k; }) ? k : "etc"; }
+function orderOf(it) { return (typeof it.order === "number") ? it.order : (it.createdAt || 0); }
+function buildBucketCats() { /* 분류 선택은 보기 필터를 따라감 */ }
 function subscribeBucket() {
   if (bucketUnsub) return;
   bucketUnsub = onSnapshot(collection(db, BUCKET_COL), function (snap) {
     bucketItems = [];
     snap.forEach(function (d) { var x = d.data(); x.id = d.id; bucketItems.push(x); });
-    bucketItems.sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
+    bucketItems.sort(function (a, b) { return orderOf(a) - orderOf(b); });
     renderBucket();
   }, function () {});
 }
@@ -1887,22 +1930,114 @@ function renderBucket() {
   var box = $("bucketList"); if (!box) return;
   if (!bucketItems.length) { box.innerHTML = '<div class="bucket-empty">아직 비어 있어요.<br>첫 버킷리스트를 적어보세요 ✨</div>'; return; }
   box.innerHTML = "";
-  bucketItems.forEach(function (it) {
-    var row = document.createElement("div"); row.className = "bucket-item" + (it.done ? " done" : "");
-    var chk = document.createElement("div"); chk.className = "bucket-check"; chk.textContent = it.done ? "✓" : "";
-    chk.onclick = function () { toggleBucket(it); };
-    var tx = document.createElement("div"); tx.className = "bucket-text"; tx.textContent = it.text || "";
-    var del = document.createElement("button"); del.className = "bucket-del"; del.type = "button"; del.textContent = "×";
-    del.onclick = function () { delBucket(it); };
-    row.appendChild(chk); row.appendChild(tx); row.appendChild(del);
-    box.appendChild(row);
+  var shown = 0;
+  BUCKET_CATS.forEach(function (c) {
+    if (bucketFilter !== "all" && c.k !== bucketFilter) return;
+    var group = bucketItems.filter(function (it) { return catOf(it) === c.k; }).sort(function (a, b) { return orderOf(a) - orderOf(b); });
+    if (!group.length) return;
+    shown += group.length;
+    var lb = document.createElement("div"); lb.className = "bucket-group"; lb.textContent = c.e + " " + c.t;
+    box.appendChild(lb);
+    group.forEach(function (it) {
+      if (editingBucketId === it.id) {
+        var erow = document.createElement("div"); erow.className = "bucket-item editing";
+        var inp = document.createElement("input"); inp.type = "text"; inp.className = "bk-edit-input"; inp.value = it.text || ""; inp.maxLength = 80;
+        var sel = document.createElement("select"); sel.className = "bk-edit-sel";
+        BUCKET_CATS.forEach(function (c) { var o = document.createElement("option"); o.value = c.k; o.textContent = c.e + " " + c.t; sel.appendChild(o); });
+        sel.value = catOf(it);
+        var sv = document.createElement("button"); sv.type = "button"; sv.className = "bk-edit-save"; sv.textContent = "저장";
+        sv.onclick = function () { saveBucketEdit(it, inp.value, sel.value); };
+        var cc = document.createElement("button"); cc.type = "button"; cc.className = "bk-edit-cancel"; cc.textContent = "취소";
+        cc.onclick = function () { editingBucketId = null; renderBucket(); };
+        erow.appendChild(inp); erow.appendChild(sel); erow.appendChild(sv); erow.appendChild(cc);
+        box.appendChild(erow);
+        setTimeout(function () { inp.focus(); }, 30);
+        return;
+      }
+      var row = document.createElement("div"); row.className = "bucket-item" + (it.done ? " done" : "");
+      var chk = document.createElement("div"); chk.className = "bucket-check"; chk.textContent = it.done ? "✓" : "";
+      chk.onclick = function () { toggleBucket(it); };
+      var tx = document.createElement("div"); tx.className = "bucket-text"; tx.textContent = it.text || "";
+      var ed = document.createElement("button"); ed.type = "button"; ed.className = "bk-edit"; ed.textContent = "✎";
+      ed.onclick = function () { editingBucketId = it.id; renderBucket(); };
+      var hd = document.createElement("div"); hd.className = "bk-handle"; hd.textContent = "⠿";
+      row.dataset.bid = it.id;
+      row.addEventListener("pointerdown", function (e) {
+        if (e.target.closest(".bucket-del") || e.target.closest(".bucket-check") || e.target.closest(".bk-edit")) return;
+        if (e.pointerType === "mouse") { startBucketDrag(e, row, it); }
+        else if (e.target.closest(".bk-handle")) { startBucketDrag(e, row, it); }
+      });
+      var del = document.createElement("button"); del.className = "bucket-del"; del.type = "button"; del.textContent = "×";
+      del.onclick = function () { delBucket(it); };
+      row.appendChild(chk); row.appendChild(tx); row.appendChild(ed); row.appendChild(hd); row.appendChild(del);
+      box.appendChild(row);
+    });
   });
+  if (!shown) box.innerHTML = '<div class="bucket-empty">이 분류엔 아직 항목이 없어요.</div>';
+}
+function startBucketDrag(e, row, it) {
+  e.preventDefault();
+  var box = $("bucketList"), targetRow = null;
+  row.classList.add("drag-src");
+  try { row.setPointerCapture(e.pointerId); } catch (err) {}
+  function clearOver() { var o = box.querySelectorAll(".bucket-item.drag-over"); for (var i = 0; i < o.length; i++) o[i].classList.remove("drag-over"); }
+  function onMove(ev) {
+    ev.preventDefault();
+    var el = document.elementFromPoint(ev.clientX, ev.clientY);
+    var t = el ? el.closest(".bucket-item") : null;
+    clearOver(); targetRow = null;
+    if (t && t !== row) { t.classList.add("drag-over"); targetRow = t; }
+  }
+  function onUp() {
+    row.removeEventListener("pointermove", onMove);
+    row.removeEventListener("pointerup", onUp);
+    row.removeEventListener("pointercancel", onUp);
+    row.classList.remove("drag-src");
+    var tid = targetRow ? targetRow.dataset.bid : null;
+    clearOver();
+    if (tid && tid !== it.id) dropBucket(it, tid);
+  }
+  row.addEventListener("pointermove", onMove);
+  row.addEventListener("pointerup", onUp);
+  row.addEventListener("pointercancel", onUp);
+}
+async function dropBucket(it, targetId) {
+  var tgt = bucketItems.filter(function (x) { return x.id === targetId; })[0];
+  if (!tgt) return;
+  var cat = catOf(tgt);
+  var full = bucketItems.filter(function (x) { return catOf(x) === cat; }).sort(function (a, b) { return orderOf(a) - orderOf(b); });
+  var after = false;
+  if (catOf(it) === cat) {
+    var myIdx = -1, tIdx = -1;
+    for (var i = 0; i < full.length; i++) { if (full[i].id === it.id) myIdx = i; if (full[i].id === tgt.id) tIdx = i; }
+    after = myIdx > -1 && myIdx < tIdx;
+  }
+  var others = full.filter(function (x) { return x.id !== it.id; });
+  var idx = -1;
+  for (var j = 0; j < others.length; j++) if (others[j].id === tgt.id) { idx = j; break; }
+  var newOrder;
+  if (after) {
+    var nx = others[idx + 1];
+    newOrder = nx ? (orderOf(tgt) + orderOf(nx)) / 2 : orderOf(tgt) + 1;
+  } else {
+    var pv = others[idx - 1];
+    newOrder = pv ? (orderOf(pv) + orderOf(tgt)) / 2 : orderOf(tgt) - 1;
+  }
+  try { await updateDoc(doc(db, BUCKET_COL, it.id), { order: newOrder, cat: cat }); }
+  catch (e) { toast("순서를 바꾸지 못했어요."); }
+}
+async function saveBucketEdit(it, text, cat) {
+  var t = (text || "").trim();
+  if (!t) { toast("내용을 입력해주세요."); return; }
+  editingBucketId = null;
+  try { await updateDoc(doc(db, BUCKET_COL, it.id), { text: t, cat: cat }); }
+  catch (e) { toast("수정하지 못했어요."); }
 }
 async function addBucket() {
   var t = ($("bucketInput").value || "").trim();
   if (!t) return;
   $("bucketInput").value = "";
-  try { await addDoc(collection(db, BUCKET_COL), { text: t, done: false, createdAt: Date.now() }); }
+  try { await addDoc(collection(db, BUCKET_COL), { text: t, done: false, cat: (bucketFilter === "all" ? "etc" : bucketFilter), order: Date.now(), createdAt: Date.now() }); }
   catch (e) { toast("추가하지 못했어요."); }
 }
 async function toggleBucket(it) {
@@ -1915,7 +2050,7 @@ async function delBucket(it) {
   catch (e) { toast("지우지 못했어요."); }
 }
 function openBucket() { subscribeBucket(); renderBucket(); $("bucketOverlay").classList.add("active"); document.body.style.overflow = "hidden"; }
-function closeBucket() { $("bucketOverlay").classList.remove("active"); document.body.style.overflow = ""; setTab("home"); }
+function closeBucket() { editingBucketId = null; $("bucketOverlay").classList.remove("active"); document.body.style.overflow = ""; setTab("home"); }
 
 /* ---------- date plans ---------- */
 var PLAN_COL = "plans";
@@ -2675,6 +2810,8 @@ function init() {
   $("bucketInput").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); addBucket(); } });
   $("bucketOverlay").addEventListener("mousedown", function (e) { if (e.target === this) closeBucket(); });
   fillTimeSelects();
+  buildBucketCats();
+  buildBucketFilter();
   $("annivBtn").onclick = function () { closeMore(); openAnniv(); };
   $("milestoneEl").onclick = openAnniv;
   $("moreClose").onclick = closeMore;
