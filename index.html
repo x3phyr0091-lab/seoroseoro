@@ -2145,6 +2145,7 @@ async function addPlan() {
   var date = ($("planDate").value || "").trim();
   var ts = getTimeSel("planTimeStartH", "planTimeStartM");
   var te = getTimeSel("planTimeEndH", "planTimeEndM");
+  if (te && te === ts) te = "";
   var title = ($("planTitle").value || "").trim();
   var memo = ($("planMemo").value || "").trim();
   if (!date) { toast("날짜를 골라주세요."); return; }
@@ -2172,7 +2173,7 @@ function editPlan(it) {
 function resetPlanForm() {
   editingPlanId = null;
   $("planDate").value = "";
-  setTimeSel("planTimeStartH", "planTimeStartM", ""); setTimeSel("planTimeEndH", "planTimeEndM", "");
+  setTimeSel("planTimeStartH", "planTimeStartM", "00:00"); setTimeSel("planTimeEndH", "planTimeEndM", "00:00");
   $("planTitle").value = ""; $("planMemo").value = "";
   $("planAddBtn").textContent = "일정 추가";
 }
@@ -2810,6 +2811,7 @@ function init() {
   $("bucketInput").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); addBucket(); } });
   $("bucketOverlay").addEventListener("mousedown", function (e) { if (e.target === this) closeBucket(); });
   fillTimeSelects();
+  setTimeSel("planTimeStartH", "planTimeStartM", "00:00"); setTimeSel("planTimeEndH", "planTimeEndM", "00:00");
   buildBucketCats();
   buildBucketFilter();
   $("annivBtn").onclick = function () { closeMore(); openAnniv(); };
