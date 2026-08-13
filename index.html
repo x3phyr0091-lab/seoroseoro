@@ -9,8 +9,8 @@
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="apple-mobile-web-app-title" content="서로서로" />
-<link rel="manifest" id="manifestLink" />
-<link rel="apple-touch-icon" id="appleIcon" />
+<link rel="manifest" href="./manifest.json" />
+<link rel="apple-touch-icon" href="./icon-192.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=Nanum+Pen+Script&family=Nanum+Gothic:wght@400;700&family=Nanum+Myeongjo:wght@400;700&family=Black+Han+Sans&family=Do+Hyeon&family=Jua&family=Gaegu:wght@400;700&family=Nanum+Brush+Script&family=Hi+Melody&display=swap" rel="stylesheet" />
@@ -376,18 +376,26 @@
   .rt-trig-color { padding:0 6px; }
   .rt-ci { width:13px; height:13px; border-radius:3px; border:1px solid rgba(0,0,0,.25); display:inline-block; margin-right:3px; }
   .rt-ar { font-size:9px; opacity:.55; margin-left:2px; }
-  .rt-menu { position:fixed; z-index:200; display:none; flex-direction:column; gap:1px;
-    min-width:118px; max-height:62vh; overflow-y:auto; padding:5px; background:#ffffff; border:1px solid var(--card-edge); border-radius:10px;
-    box-shadow:0 12px 30px rgba(40,20,50,.28); }
+  .rt-menu { position:fixed; z-index:200; display:none; flex-direction:column; gap:2px;
+    min-width:132px; max-height:62vh; overflow-y:auto; padding:7px; background:rgba(255,255,255,.96); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border:1px solid rgba(232,138,180,.3); border-radius:15px;
+    box-shadow:0 14px 36px rgba(190,120,170,.28); }
   .rt-menu.open { display:flex; }
-  .rt-menu button { width:100%; height:32px; min-width:0; justify-content:flex-start; padding:0 10px; font-size:14px; border-radius:6px; color:var(--ink); }
-  .rt-menu button:hover { background:rgba(232,138,180,.18); }
+  .rt-menu button { width:100%; height:34px; min-width:0; justify-content:flex-start; padding:0 12px; font-size:13.5px; border-radius:9px; color:var(--ink); border:none; background:none; }
+  .rt-menu button:hover { background:rgba(232,138,180,.16); color:#b0486d; }
+  .rt-menu.rt-row { flex-direction:row; gap:4px; min-width:0; }
+  .rt-menu.rt-row button { width:38px; height:34px; justify-content:center; padding:0; color:var(--text-dim); }
+  .rt-menu.rt-row button:hover { color:#b0486d; }
+  .rt-dot { width:4.5px; height:4.5px; border-radius:50%; background:var(--ink); display:inline-block; margin-right:8px; flex-shrink:0; }
+  .rt-num { font-size:11.5px; color:var(--text-dim); margin-right:7px; flex-shrink:0; }
+  .ce ul { padding-left:1.35em; } .ce ol { padding-left:1.5em; }
+  .ce ul li::marker { font-size:.7em; }
+  .detail-content ul li::marker { font-size:.7em; }
   .size-ctrl { padding:10px 12px; min-width:182px; }
+  .size-list { display:flex; flex-direction:column; gap:2px; min-width:96px; }
+  .size-list button { justify-content:space-between !important; }
+  .size-list button .sp-u { font-size:10.5px; color:var(--text-dim); }
   .size-val { text-align:center; font-size:20px; font-weight:700; color:var(--ink); margin-bottom:8px; font-family:var(--sans); }
   .size-val span { color:var(--gold); }
-  #sizeRange { width:100%; margin-bottom:10px; accent-color:var(--gold); cursor:pointer; }
-  .rt-menu .size-presets { display:flex; gap:5px; margin-bottom:10px; }
-  .rt-menu .size-presets button { height:auto; width:auto; flex:1; padding:6px 0; justify-content:center; border:1px solid var(--card-edge); background:rgba(255,255,255,.6); border-radius:8px; font-size:12px; color:var(--text); }
   .rt-menu .size-apply { height:auto; width:100%; padding:9px; justify-content:center; border-radius:9px; background:var(--gold); color:#fff; font-weight:700; font-size:13px; }
   .rt-palette { min-width:auto; }
   .rt-sw-grid { display:grid; grid-template-columns:repeat(8,1fr); gap:3px; }
@@ -836,21 +844,10 @@
         <div class="field"><label>장소 (선택)</label><input type="text" id="memPlace" placeholder="예) 왕송호수" maxlength="40" /></div>
       </div>
       <div class="rich-toolbar" id="richToolbar">
-        <div class="rt-dd">
-          <button type="button" class="rt-trig" data-dd="ddBlock" title="문단 스타일">본문 ▾</button>
-          <div class="rt-menu" id="ddBlock">
-            <button type="button" data-block="h2" class="rt-item" style="font-size:18px;font-weight:700">제목</button>
-            <button type="button" data-block="h3" class="rt-item" style="font-size:15px;font-weight:700">소제목</button>
-            <button type="button" data-block="div" class="rt-item">본문</button>
-          </div>
-        </div>
-        <span class="sep"></span>
         <button type="button" data-cmd="bold" title="굵게"><b>B</b></button>
         <button type="button" data-cmd="italic" title="기울임"><i>I</i></button>
         <button type="button" data-cmd="underline" title="밑줄"><u>U</u></button>
         <button type="button" data-cmd="strikeThrough" title="취소선"><s>S</s></button>
-        <button type="button" data-cmd="superscript" title="위 첨자">X²</button>
-        <button type="button" data-cmd="subscript" title="아래 첨자">X₂</button>
         <span class="sep"></span>
         <div class="rt-dd">
           <button type="button" class="rt-trig" data-dd="ddFont" title="글씨체">글씨체 ▾</button>
@@ -872,16 +869,7 @@
         <div class="rt-dd">
           <button type="button" class="rt-trig" data-dd="ddSize" title="글자 크기">크기 ▾</button>
           <div class="rt-menu" id="ddSize">
-            <div class="size-ctrl">
-              <div class="size-val"><span id="sizeNum">16</span> px</div>
-              <input type="range" id="sizeRange" min="10" max="48" value="16" />
-              <div class="size-presets">
-                <button type="button" class="size-preset" data-px="14">작게</button>
-                <button type="button" class="size-preset" data-px="18">보통</button>
-                <button type="button" class="size-preset" data-px="26">크게</button>
-              </div>
-              <button type="button" id="sizeApply" class="size-apply">이 크기로 적용</button>
-            </div>
+            <div class="size-list" id="sizeList"></div>
           </div>
         </div>
         <span class="sep"></span>
@@ -896,32 +884,23 @@
         <span class="sep"></span>
         <div class="rt-dd">
           <button type="button" class="rt-trig" data-dd="ddAlign" title="정렬">정렬 ▾</button>
-          <div class="rt-menu" id="ddAlign">
-            <button type="button" data-cmd="justifyLeft" class="rt-item">왼쪽</button>
-            <button type="button" data-cmd="justifyCenter" class="rt-item">가운데</button>
-            <button type="button" data-cmd="justifyRight" class="rt-item">오른쪽</button>
+          <div class="rt-menu rt-row" id="ddAlign">
+            <button type="button" data-cmd="justifyLeft" class="rt-item" title="왼쪽 정렬"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h10M3 18h14"/></svg></button>
+            <button type="button" data-cmd="justifyCenter" class="rt-item" title="가운데 정렬"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M7 12h10M5 18h14"/></svg></button>
+            <button type="button" data-cmd="justifyRight" class="rt-item" title="오른쪽 정렬"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M11 12h10M7 18h14"/></svg></button>
           </div>
         </div>
         <div class="rt-dd">
           <button type="button" class="rt-trig" data-dd="ddList" title="목록·들여쓰기">목록 ▾</button>
           <div class="rt-menu" id="ddList">
-            <button type="button" data-cmd="insertUnorderedList" class="rt-item">• 글머리 기호</button>
-            <button type="button" data-cmd="insertOrderedList" class="rt-item">1. 번호 매기기</button>
-            <button type="button" data-cmd="indent" class="rt-item">들여쓰기 →</button>
-            <button type="button" data-cmd="outdent" class="rt-item">← 내어쓰기</button>
+            <button type="button" data-cmd="insertUnorderedList" class="rt-item"><span class="rt-dot"></span>글머리 기호</button>
+            <button type="button" data-cmd="insertOrderedList" class="rt-item"><span class="rt-num">1.</span>번호 매기기</button>
+            <button type="button" data-cmd="indent" class="rt-item"><span class="rt-num">→</span>들여쓰기</button>
+            <button type="button" data-cmd="outdent" class="rt-item"><span class="rt-num">←</span>내어쓰기</button>
           </div>
         </div>
         <span class="sep"></span>
-        <div class="rt-dd">
-          <button type="button" class="rt-trig" data-dd="ddInsert" title="삽입">삽입 ▾</button>
-          <div class="rt-menu" id="ddInsert">
-            <button type="button" data-link="1" class="rt-item">🔗 링크</button>
-            <button type="button" data-table="1" class="rt-item">⊞ 표</button>
-            <button type="button" data-char="1" class="rt-item">✶ 특수문자</button>
-            <button type="button" data-block="blockquote" class="rt-item">❝ 인용구</button>
-            <button type="button" data-hr="1" class="rt-item">─ 구분선</button>
-          </div>
-        </div>
+        <button type="button" data-hr="1" title="구분선">─</button>
       </div>
       <div class="char-palette" id="charPalette" style="display:none"></div>
       <div class="field"><label>제목</label><div class="ce" id="memTitle" contenteditable="true" data-ph="이 날을 한마디로"></div></div>
@@ -1002,53 +981,16 @@ let draftPhotos = [], draftMoods = [], draftAuthor = null, editingId = null, dra
 
 const MOODS = [
   { e: "❤️", t: "사랑" }, { e: "😊", t: "행복" }, { e: "😂", t: "웃음" }, { e: "🤗", t: "포근" },
-  { e: "🍷", t: "특별" }, { e: "🙏", t: "고마움" }, { e: "😮", t: "신기" }, { e: "😢", t: "속상" }, { e: "😟", t: "걱정" }
+  { e: "🍷", t: "특별" }, { e: "🙏", t: "고마움" }, { e: "😮", t: "신기" },
+  { e: "😌", t: "편안" }, { e: "🌿", t: "상쾌" }, { e: "🤩", t: "신남" }, { e: "🙌", t: "뿌듯" },
+  { e: "😴", t: "나른" }, { e: "😵", t: "피곤" }, { e: "😳", t: "민망" },
+  { e: "😢", t: "속상" }, { e: "😤", t: "서운" }, { e: "🙇", t: "미안" }, { e: "😟", t: "걱정" }
 ];
-const MOOD_ALIAS = { "설렘": "사랑", "두근": "사랑", "뭉클": "사랑", "뿌듯": "행복", "평온": "포근", "그리움": "포근", "서운": "속상", "화남": "속상", "삐짐": "속상", "다툼": "속상", "미안": "속상", "우울": "속상", "지침": "속상", "긴장": "걱정" };
+const MOOD_ALIAS = { "설렘": "사랑", "두근": "사랑", "뭉클": "사랑", "평온": "포근", "그리움": "포근", "화남": "서운", "삐짐": "서운", "다툼": "서운", "우울": "속상", "지침": "피곤", "긴장": "걱정" };
 
 /* ---------- helpers ---------- */
 const $ = function (id) { return document.getElementById(id); };
 function withTimeout(p, ms, label) { return Promise.race([p, new Promise(function (_, rej) { setTimeout(function () { rej(new Error((label || "응답 없음") + " · " + (ms / 1000) + "초 초과")); }, ms); })]); }
-(function setupPWA() {
-  function roundRect(ctx, x, y, w, h, r) {
-    ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
-  }
-  function drawHeart(ctx, x, y, w) {
-    var t = w * 0.3;
-    ctx.beginPath(); ctx.moveTo(x, y + t);
-    ctx.bezierCurveTo(x, y, x - w / 2, y, x - w / 2, y + t);
-    ctx.bezierCurveTo(x - w / 2, y + (w + t) / 2, x, y + (w + t) / 2, x, y + w);
-    ctx.bezierCurveTo(x, y + (w + t) / 2, x + w / 2, y + (w + t) / 2, x + w / 2, y + t);
-    ctx.bezierCurveTo(x + w / 2, y, x, y, x, y + t);
-    ctx.closePath(); ctx.fill();
-  }
-  function makeIcon(size) {
-    var c = document.createElement("canvas"); c.width = size; c.height = size;
-    var x = c.getContext("2d");
-    var g = x.createLinearGradient(0, 0, size, size);
-    g.addColorStop(0, "#f9cbe0"); g.addColorStop(.5, "#e6c5f1"); g.addColorStop(1, "#c6b5f5");
-    x.fillStyle = g; roundRect(x, 0, 0, size, size, size * 0.22); x.fill();
-    x.fillStyle = "rgba(255,255,255,.5)"; drawHeart(x, size * 0.4, size * 0.36, size * 0.34);
-    x.fillStyle = "rgba(255,255,255,.95)"; drawHeart(x, size * 0.6, size * 0.46, size * 0.34);
-    return c.toDataURL("image/png");
-  }
-  try {
-    var icon192 = makeIcon(192), icon512 = makeIcon(512), icon180 = makeIcon(180);
-    var manifest = {
-      name: "서로서로", short_name: "서로서로",
-      start_url: ".", scope: ".", display: "standalone",
-      background_color: "#fde6f1", theme_color: "#f3e7fb",
-      icons: [
-        { src: icon192, sizes: "192x192", type: "image/png", purpose: "any maskable" },
-        { src: icon512, sizes: "512x512", type: "image/png", purpose: "any maskable" }
-      ]
-    };
-    var blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
-    var ml = document.getElementById("manifestLink"); if (ml) ml.href = URL.createObjectURL(blob);
-    var ai = document.getElementById("appleIcon"); if (ai) ai.href = icon180;
-  } catch (e) {}
-})();
 function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 function show(id) { var s = document.querySelectorAll(".screen"); for (var i = 0; i < s.length; i++) s[i].classList.remove("active"); $(id).classList.add("active"); }
 function toast(msg) { var t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._tm); t._tm = setTimeout(function () { t.classList.remove("show"); }, 2400); }
@@ -2721,6 +2663,15 @@ function init() {
       m.style.left = left + "px"; m.style.top = top + "px";
     }
   }
+  function buildSizeList() {
+    var box = $("sizeList"); if (!box || box.dataset.built) return;
+    for (var s = 8; s <= 40; s += 2) {
+      var b = document.createElement("button"); b.type = "button"; b.dataset.px = s;
+      b.innerHTML = '<span>' + s + '</span><span class="sp-u">px</span>';
+      box.appendChild(b);
+    }
+    box.dataset.built = "1";
+  }
   function applyFontSize(px) {
     px = parseInt(px, 10); if (!px) return;
     restoreSelection();
@@ -2744,9 +2695,43 @@ function init() {
       document.execCommand("foreColor", false, c);
       var ci = $("ciColor"); if (ci) ci.style.background = c;
     } else {
-      if (!document.execCommand("hiliteColor", false, c)) document.execCommand("backColor", false, c);
+      var ok = false;
+      try { ok = document.execCommand("hiliteColor", false, c); } catch (e) { ok = false; }
+      if (!ok) { try { ok = document.execCommand("backColor", false, c); } catch (e2) { ok = false; } }
+      if (!ok || !hiliteApplied(c)) wrapHilite(c);
       var ci2 = $("ciHilite"); if (ci2 && c !== "transparent") ci2.style.background = c;
     }
+  }
+  function hiliteApplied(c) {
+    try {
+      var sel = window.getSelection(); if (!sel.rangeCount) return false;
+      var node = sel.getRangeAt(0).commonAncestorContainer;
+      if (node.nodeType === 3) node = node.parentNode;
+      if (!node || !node.closest) return false;
+      var el = node.closest("span,font,div"); if (!el) return false;
+      var bg = window.getComputedStyle(el).backgroundColor;
+      return !!bg && bg !== "rgba(0, 0, 0, 0)" && bg !== "transparent";
+    } catch (e) { return false; }
+  }
+  function wrapHilite(c) {
+    try {
+      var sel = window.getSelection(); if (!sel.rangeCount || sel.isCollapsed) return;
+      var range = sel.getRangeAt(0);
+      if (c === "transparent") {
+        var frag0 = range.extractContents();
+        Array.prototype.forEach.call(frag0.querySelectorAll("span,font"), function (s) { s.style.backgroundColor = ""; });
+        range.insertNode(frag0);
+        return;
+      }
+      var span = document.createElement("span");
+      span.style.backgroundColor = c;
+      var frag = range.extractContents();
+      span.appendChild(frag);
+      range.insertNode(span);
+      var nr = document.createRange(); nr.selectNodeContents(span);
+      sel.removeAllRanges(); sel.addRange(nr);
+      savedRange = nr.cloneRange();
+    } catch (e) {}
   }
   function buildPalette(menuId, type, colors, withClear) {
     var menu = $(menuId);
@@ -2779,13 +2764,13 @@ function init() {
     btn.onclick = function () {
       var dd = btn.getAttribute("data-dd");
       if (dd) {
+        if (dd === "ddSize") buildSizeList();
         if (dd === "ddColor") buildPalette("ddColor", "color", PALETTE, false);
         if (dd === "ddHilite") buildPalette("ddHilite", "hilite", HILITES, true);
         toggleDD(dd, btn);
         return;
       }
-      if (btn.classList.contains("size-apply")) { applyFontSize($("sizeRange").value); closeAllDD(); return; }
-      if (btn.classList.contains("size-preset")) { var sp = btn.getAttribute("data-px"); $("sizeRange").value = sp; $("sizeNum").textContent = sp; applyFontSize(sp); closeAllDD(); return; }
+      if (btn.dataset && btn.dataset.px) { applyFontSize(btn.dataset.px); closeAllDD(); return; }
       var cmd = btn.getAttribute("data-cmd"), size = btn.getAttribute("data-size"),
           font = btn.getAttribute("data-font"), block = btn.getAttribute("data-block"),
           hr = btn.getAttribute("data-hr"), link = btn.getAttribute("data-link"),
@@ -2860,7 +2845,6 @@ function init() {
   $("statsClose").onclick = closeStats;
   $("statsOverlay").addEventListener("mousedown", function (e) { if (e.target === this) closeStats(); });
   $("favFilterBtn").onclick = function () { showFavOnly = !showFavOnly; this.classList.toggle("active", showFavOnly); currentPage = 0; renderList(); };
-  $("sizeRange").addEventListener("input", function () { $("sizeNum").textContent = this.value; });
   $("commentSend").onclick = addComment;
   $("commentText").addEventListener("input", function () { autoGrow(this); });
   var _addDownSelf = false, _detDownSelf = false;
