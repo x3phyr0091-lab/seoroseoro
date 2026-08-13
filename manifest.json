@@ -1,11 +1,15 @@
 {
   "name": "서로서로",
   "short_name": "서로서로",
+  "description": "서로의 모든 날",
   "start_url": "./index.html",
   "scope": "./",
+  "id": "/seoroseoro/",
   "display": "standalone",
-  "background_color": "#fde6f1",
+  "orientation": "portrait",
+  "background_color": "#f3e7fb",
   "theme_color": "#f3e7fb",
+  "lang": "ko",
   "icons": [
     {
       "src": "./icon-192.png",
@@ -18,12 +22,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
-    },
-    {
-      "src": "./icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
     }
   ]
 }
