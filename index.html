@@ -580,6 +580,17 @@
   .photo-thumb .cover-badge { position:absolute; left:4px; top:4px; background:rgba(232,138,180,.95); color:#fff; font-size:10.5px; font-weight:700; font-family:var(--sans); padding:3px 8px; border-radius:8px; border:none; cursor:default; }
   .photo-thumb .cover-set { position:absolute; left:4px; top:4px; background:rgba(0,0,0,.45); color:#fff; font-size:10.5px; font-weight:600; font-family:var(--sans); padding:3px 8px; border-radius:8px; border:none; cursor:pointer; opacity:.85; }
   .photo-thumb .cover-set:hover { background:rgba(232,138,180,.85); opacity:1; }
+  .photo-thumb .pick { position:absolute; right:4px; bottom:4px; width:26px; height:26px; border-radius:50%; background:rgba(0,0,0,.42); border:2px solid rgba(255,255,255,.85); color:#fff; font-size:14px; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; z-index:3; }
+  .photo-thumb .pick:hover { background:rgba(0,0,0,.65); }
+  .photo-thumb.picked { outline:3px solid var(--gold); outline-offset:-3px; }
+  .photo-thumb.picked .pick { background:var(--gold); border-color:#fff; }
+  .photo-pickbar { display:none; align-items:center; gap:10px; margin-top:10px; padding:8px 12px; border-radius:10px; background:rgba(232,138,180,.12); border:1px solid rgba(232,138,180,.3); font-family:var(--sans); font-size:13px; color:var(--ink); }
+  .photo-pickbar.on { display:flex; }
+  .photo-pickbar .grow { flex:1; }
+  .photo-pickbar button { background:rgba(255,255,255,.7); border:1px solid var(--card-edge); border-radius:8px; padding:5px 10px; font-size:12.5px; cursor:pointer; font-family:var(--sans); color:var(--ink); }
+  .photo-pickbar button:hover { background:#fff; }
+  .detail-gallery img.ph-load { background:linear-gradient(100deg, rgba(60,40,55,.06) 30%, rgba(60,40,55,.13) 50%, rgba(60,40,55,.06) 70%); background-size:220% 100%; animation:phShimmer 1.1s linear infinite; }
+  @keyframes phShimmer { from { background-position:180% 0; } to { background-position:-40% 0; } }
   .photo-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
   .photo-thumb .remove { position:absolute; top:4px; right:4px; width:22px; height:22px; border:none; border-radius:50%;
     background:rgba(0,0,0,.6); color:#fff; cursor:pointer; font-size:14px; line-height:1; display:flex; align-items:center; justify-content:center; }
@@ -853,6 +864,7 @@
       <div class="field">
         <div class="photo-drop" id="photoDrop">📷 사진 더하기 (여러 장 가능, 선택)</div>
         <div class="photo-grid" id="photoGrid"></div>
+        <div class="photo-pickbar" id="photoPickBar"><span id="pickCount">0장 선택됨</span><span class="grow"></span><button type="button" id="pickAll">전체 선택</button><button type="button" id="pickClear">선택 해제</button></div>
         <input type="file" id="photoInput" accept="image/*" multiple style="display:none" />
       </div>
       <div class="row2">
@@ -1270,6 +1282,23 @@ async function loadPhotos(m) {
   }
   return photosOf(m);
 }
+/* 전부 모일 때까지 기다리지 않고, 도착한 사진부터 하나씩 넘겨줌 */
+function loadPhotosEach(m, cb) {
+  if (m.photoIds && m.photoIds.length) {
+    m.photoIds.forEach(function (pid, i) {
+      if (_photoDocCache[pid]) { cb(i, _photoDocCache[pid]); return; }
+      getDoc(doc(db, PHOTO_COL, pid)).then(function (s) {
+        if (!s.exists()) return;
+        var dd = s.data();
+        if (dd && dd.data) { _photoDocCache[pid] = dd.data; cb(i, dd.data); }
+      }).catch(function () {});
+    });
+    return m.photoIds.length;
+  }
+  var ps = photosOf(m);
+  ps.forEach(function (src, i) { cb(i, src); });
+  return ps.length;
+}
 function makeThumb(b64) {
   return new Promise(function (resolve) {
     var img = new Image();
@@ -1433,7 +1462,7 @@ function openAdd(editMem) {
     $("memContent").innerHTML = editMem.content || "";
     draftMoods = moodsOf(editMem).slice();
     draftAuthor = editMem.author || null;
-    draftPhotos = [];
+    draftPhotos = []; draftSel = []; lastPickIdx = -1;
     draftCoverIdx = editMem.coverIdx || 0;
     renderPhotoGrid();
     $("photoDrop").textContent = "사진 불러오는 중…";
@@ -1441,7 +1470,7 @@ function openAdd(editMem) {
   } else {
     $("memDate").value = todayStr(); $("memEndDate").value = ""; $("memPlace").value = ""; $("memPw").value = "";
     $("memTitle").innerHTML = ""; $("memContent").innerHTML = "";
-    draftPhotos = []; draftMoods = []; draftAuthor = null; draftCoverIdx = 0;
+    draftPhotos = []; draftMoods = []; draftAuthor = null; draftCoverIdx = 0; draftSel = []; lastPickIdx = -1;
     renderPhotoGrid(); $("photoDrop").textContent = dropLabel();
     var d = getDraft();
     if (d && !d.editingId) {
@@ -1528,42 +1557,105 @@ function dropLabel() { return "📷 사진 더하기 (여러 장 가능, 선택)
 function handleFiles(files) {
   var list = Array.prototype.slice.call(files).filter(function (f) { return f && f.type && f.type.indexOf("image") === 0; });
   if (!list.length) return;
-  $("photoDrop").textContent = "사진 정리하는 중…";
-  var chain = Promise.resolve();
-  list.forEach(function (f) {
-    chain = chain.then(function () {
-      return compressImage(f, 850000).then(function (b64) { draftPhotos.push(b64); });
-    });
-  });
-  chain.then(function () {
+  var done = 0, total = list.length;
+  function tick() { done++; $("photoDrop").textContent = "사진 정리하는 중… (" + done + "/" + total + ")"; }
+  $("photoDrop").textContent = "사진 정리하는 중… (0/" + total + ")";
+  /* 한 장씩 기다리지 않고 3장씩 동시에 — 순서는 그대로 유지 */
+  var out = new Array(total), next = 0, LANES = 3;
+  function lane() {
+    if (next >= total) return Promise.resolve();
+    var my = next++;
+    return compressImage(list[my], 620000)
+      .then(function (b64) { out[my] = b64; })
+      .catch(function () { out[my] = null; })
+      .then(function () { tick(); return lane(); });
+  }
+  var lanes = [];
+  for (var i = 0; i < Math.min(LANES, total); i++) lanes.push(lane());
+  Promise.all(lanes).then(function () {
+    var okCnt = 0;
+    for (var k = 0; k < total; k++) if (out[k]) { draftPhotos.push(out[k]); okCnt++; }
     renderPhotoGrid(); $("photoDrop").textContent = dropLabel();
+    if (okCnt < total) toast("일부 사진을 불러오지 못했어요.");
     if (draftPhotos.length > 40) toast("사진이 아주 많으면 저장·불러오기가 조금 느려질 수 있어요.");
-  }).catch(function () { renderPhotoGrid(); $("photoDrop").textContent = dropLabel(); toast("일부 사진을 불러오지 못했어요."); });
+  });
+}
+var draftSel = [];   /* 묶어서 옮길 사진 인덱스 */
+var lastPickIdx = -1;
+function isPicked(i) { return draftSel.indexOf(i) >= 0; }
+function togglePick(i, range) {
+  if (range && lastPickIdx >= 0) {
+    var a = Math.min(lastPickIdx, i), b = Math.max(lastPickIdx, i);
+    for (var k = a; k <= b; k++) if (!isPicked(k)) draftSel.push(k);
+  } else {
+    var p = draftSel.indexOf(i);
+    if (p >= 0) draftSel.splice(p, 1); else draftSel.push(i);
+    lastPickIdx = i;
+  }
+  renderPhotoGrid();
+}
+function clearPick() { draftSel = []; lastPickIdx = -1; renderPhotoGrid(); }
+function updatePickBar() {
+  var bar = $("photoPickBar");
+  if (!bar) return;
+  bar.classList.toggle("on", draftSel.length > 0);
+  $("pickCount").textContent = draftSel.length + "장 선택됨 · 아무 사진이나 끌면 함께 이동";
+}
+function movePhotoGroup(idxList, toIdx) {
+  idxList = idxList.slice().sort(function (a, b) { return a - b; });
+  if (!idxList.length || idxList.indexOf(toIdx) >= 0) return;
+  var coverRef = draftPhotos[draftCoverIdx];
+  var group = idxList.map(function (i) { return draftPhotos[i]; });
+  var targetRef = draftPhotos[toIdx];
+  var rest = [];
+  for (var i = 0; i < draftPhotos.length; i++) if (idxList.indexOf(i) < 0) rest.push(draftPhotos[i]);
+  var pos = rest.indexOf(targetRef);
+  if (pos < 0) pos = rest.length;
+  else if (toIdx > idxList[0]) pos = pos + 1;
+  rest.splice.apply(rest, [pos, 0].concat(group));
+  draftPhotos = rest;
+  var ci = draftPhotos.indexOf(coverRef);
+  draftCoverIdx = ci < 0 ? 0 : ci;
+  draftSel = [];
+  for (var j = 0; j < group.length; j++) draftSel.push(pos + j);
+  lastPickIdx = pos;
+  renderPhotoGrid();
 }
 function renderPhotoGrid() {
   var g = $("photoGrid"); g.innerHTML = "";
   if (draftCoverIdx >= draftPhotos.length) draftCoverIdx = 0;
+  draftSel = draftSel.filter(function (i) { return i >= 0 && i < draftPhotos.length; });
   draftPhotos.forEach(function (b64, idx) {
-    var d = document.createElement("div"); d.className = "photo-thumb"; d.dataset.idx = idx;
+    var d = document.createElement("div"); d.className = "photo-thumb" + (isPicked(idx) ? " picked" : ""); d.dataset.idx = idx;
     var im = document.createElement("img"); im.src = b64; im.alt = ""; im.draggable = false;
     var rm = document.createElement("button"); rm.className = "remove"; rm.type = "button"; rm.textContent = "×"; rm.setAttribute("aria-label", "사진 빼기");
     rm.onclick = function () {
       draftPhotos.splice(idx, 1);
       if (idx === draftCoverIdx) draftCoverIdx = 0;
       else if (idx < draftCoverIdx) draftCoverIdx--;
+      draftSel = [];
       renderPhotoGrid();
     };
     var cv = document.createElement("button"); cv.type = "button";
     if (idx === draftCoverIdx) { cv.className = "cover-badge"; cv.textContent = "★ 대표"; }
     else { cv.className = "cover-set"; cv.textContent = "대표로"; cv.onclick = function (e) { e.stopPropagation(); draftCoverIdx = idx; renderPhotoGrid(); }; }
+    var pk = document.createElement("button"); pk.className = "pick"; pk.type = "button";
+    pk.textContent = isPicked(idx) ? "✓" : "";
+    pk.setAttribute("aria-label", "사진 묶어서 선택");
+    pk.onclick = function (e) { e.stopPropagation(); togglePick(idx, e.shiftKey); };
     var hd = document.createElement("div"); hd.className = "drag-handle"; hd.textContent = "⠿";
     d.addEventListener("pointerdown", function (e) {
-      if (e.target.closest(".remove") || e.target.closest(".cover-set")) return;
+      if (e.target.closest(".remove") || e.target.closest(".cover-set") || e.target.closest(".pick")) return;
+      /* Ctrl(맥은 ⌘) + 클릭 또는 Shift + 클릭 → 묶음 선택 */
+      if (e.pointerType === "mouse" && (e.ctrlKey || e.metaKey || e.shiftKey)) {
+        e.preventDefault(); togglePick(idx, e.shiftKey); return;
+      }
       if (e.pointerType === "mouse") { startPhotoDrag(e, d, idx); }
       else if (e.target.closest(".drag-handle")) { startPhotoDrag(e, d, idx); }
     });
-    d.appendChild(im); d.appendChild(rm); d.appendChild(cv); d.appendChild(hd); g.appendChild(d);
+    d.appendChild(im); d.appendChild(rm); d.appendChild(cv); d.appendChild(pk); d.appendChild(hd); g.appendChild(d);
   });
+  updatePickBar();
 }
 function startPhotoDrag(e, thumb, fromIdx) {
   e.preventDefault();
@@ -1584,6 +1676,7 @@ function startPhotoDrag(e, thumb, fromIdx) {
     thumb.removeEventListener("pointercancel", onUp);
     thumb.classList.remove("drag-src"); clearOver();
     if (toIdx !== null && toIdx !== fromIdx) {
+      if (draftSel.length > 1 && isPicked(fromIdx)) { movePhotoGroup(draftSel, toIdx); return; }
       var item = draftPhotos.splice(fromIdx, 1)[0];
       draftPhotos.splice(toIdx, 0, item);
       if (draftCoverIdx === fromIdx) draftCoverIdx = toIdx;
@@ -1617,18 +1710,25 @@ async function saveMemory() {
   $("saveBtn").textContent = editing ? "수정하는 중…" : "간직하는 중…";
   try {
     // 사진을 각각 별도 문서로 저장 (추억 문서 용량 제한을 피해 장수 제한을 없앰)
-    var photoIds = [];
-    for (var i = 0; i < draftPhotos.length; i++) {
-      var pref = await addDoc(collection(db, PHOTO_COL), { data: draftPhotos[i], order: i, createdAt: Date.now() });
-      photoIds.push(pref.id);
-    }
+    var upDone = 0, upTotal = draftPhotos.length;
+    var photoIds = await Promise.all(draftPhotos.map(function (b64, i) {
+      return addDoc(collection(db, PHOTO_COL), { data: b64, order: i, createdAt: Date.now() }).then(function (pref) {
+        upDone++;
+        if (upTotal > 1) $("saveBtn").textContent = "사진 올리는 중… (" + upDone + "/" + upTotal + ")";
+        return pref.id;
+      });
+    }));
+    $("saveBtn").textContent = editing ? "수정하는 중…" : "간직하는 중…";
     var ci = (draftCoverIdx >= 0 && draftCoverIdx < draftPhotos.length) ? draftCoverIdx : 0;
     var cover = draftPhotos.length ? await makeThumb(draftPhotos[ci]) : null;
     var fields = { date: date, endDate: endDate, title: title, content: content, place: place, moods: draftMoods.slice(), author: draftAuthor || settings.name1, cover: cover, coverIdx: ci, photoIds: photoIds, photoCount: draftPhotos.length, photos: [], pw: pw };
     if (editing) {
       var old = memories.filter(function (x) { return x.id === editing; })[0];
       if (old && old.photoIds && old.photoIds.length) {
-        for (var j = 0; j < old.photoIds.length; j++) { try { await deleteDoc(doc(db, PHOTO_COL, old.photoIds[j])); } catch (e) {} }
+        await Promise.all(old.photoIds.map(function (pid) {
+          delete _photoDocCache[pid];
+          return deleteDoc(doc(db, PHOTO_COL, pid)).catch(function () {});
+        }));
       }
       await updateDoc(doc(db, MEM_COL, editing), fields);
       clearDraft();
@@ -1787,23 +1887,36 @@ function openDetail(m) {
   $("galPrev").classList.add("hide"); $("galNext").classList.add("hide");
   if (cnt > 0) {
     gal.className = "detail-gallery";
-    gal.innerHTML = cover ? '<img src="' + cover + '" alt="" />' : "";
-    wrap.style.display = "block"; gal.scrollLeft = 0;
-    loadPhotos(m).then(function (photos) {
+    gal.innerHTML = "";
+    wrap.style.display = "block";
+    var loaded = new Array(cnt), imgEls = [];
+    var ciDefault = (typeof m.coverIdx === "number" && m.coverIdx >= 0 && m.coverIdx < cnt) ? m.coverIdx : 0;
+    for (var pi = 0; pi < cnt; pi++) {
+      (function (i) {
+        var im = document.createElement("img"); im.alt = ""; im.className = "ph-load";
+        if (i === ciDefault && cover) { im.src = cover; }   /* 대표 사진은 즉시 */
+        function openHere() {
+          var list = [], myIdx = 0;
+          for (var k = 0; k < loaded.length; k++) {
+            if (loaded[k]) { list.push(loaded[k]); if (k === i) myIdx = list.length - 1; }
+          }
+          if (!list.length) return;
+          openLightbox(list[myIdx], list, myIdx);
+        }
+        im.__lbOpen = function () { openHere(); };
+        im.onclick = function () { if (galDragMoved) { galDragMoved = false; return; } openHere(); };
+        gal.appendChild(im); imgEls.push(im);
+      })(pi);
+    }
+    gal.scrollLeft = 0;
+    buildDots(gal, dots, cnt);
+    var multi0 = cnt > 1;
+    $("galPrev").classList.toggle("hide", !multi0);
+    $("galNext").classList.toggle("hide", !multi0);
+    loadPhotosEach(m, function (i, src) {
       if (detailCurrent !== m) return;
-      gal.innerHTML = "";
-      gal.className = "detail-gallery";
-      photos.forEach(function (src, pi) {
-        var im = document.createElement("img"); im.src = src; im.alt = "";
-        im.__lbOpen = function () { openLightbox(src, photos, pi); };
-        im.onclick = function () { if (galDragMoved) { galDragMoved = false; return; } openLightbox(src, photos, pi); };
-        gal.appendChild(im);
-      });
-      gal.scrollLeft = 0;
-      buildDots(gal, dots, photos.length);
-      var multi = photos.length > 1;
-      $("galPrev").classList.toggle("hide", !multi);
-      $("galNext").classList.toggle("hide", !multi);
+      loaded[i] = src;
+      if (imgEls[i]) { imgEls[i].src = src; imgEls[i].classList.remove("ph-load"); }
     });
   } else { wrap.style.display = "none"; gal.innerHTML = ""; }
   $("detailTitle").innerHTML = stripTags(m.title).trim() ? m.title : "(제목 없음)";
@@ -2709,6 +2822,8 @@ function init() {
   $("filterReset").onclick = function () { $("filterAuthor").value = ""; $("filterFrom").value = ""; $("filterTo").value = ""; currentPage = 0; renderList(); };
   $("photoDrop").onclick = function () { $("photoInput").click(); };
   $("photoInput").addEventListener("change", function (e) { if (e.target.files && e.target.files.length) handleFiles(e.target.files); e.target.value = ""; });
+  $("pickAll").onclick = function () { draftSel = draftPhotos.map(function (_, i) { return i; }); lastPickIdx = 0; renderPhotoGrid(); };
+  $("pickClear").onclick = clearPick;
 
   /* ===== 서식 툴바 (v6) ===== */
   var savedRange = null;
@@ -2922,6 +3037,15 @@ function init() {
     el.addEventListener("keyup", function () { saveSelection(); updateToolbarState(); });
     el.addEventListener("mouseup", function () { saveSelection(); updateToolbarState(); });
     el.addEventListener("focus", saveSelection);
+  });
+  /* 드래그를 에디터 바깥(스크롤 밖)에서 놓아도 선택이 남도록 문서 전체에서 추적 */
+  document.addEventListener("selectionchange", function () {
+    if (!$("addOverlay").classList.contains("active")) return;
+    saveSelection();
+  });
+  document.addEventListener("mouseup", function () {
+    if (!$("addOverlay").classList.contains("active")) return;
+    saveSelection(); updateToolbarState();
   });
 
   $("detailClose").onclick = closeDetail;
