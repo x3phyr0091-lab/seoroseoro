@@ -417,6 +417,34 @@
   .comments { margin-top:18px; padding-top:16px; border-top:1px solid var(--card-edge); }
   .comments-title { font-family:var(--sans); font-size:13px; font-weight:700; color:var(--ink); margin-bottom:12px; letter-spacing:.02em; }
   .comments-title span { color:var(--text-dim); font-weight:400; }
+  /* ===== 문단 댓글 ===== */
+  .para-wrap { position:relative; }
+  .para-wrap.has-cmt > .para-body { background:rgba(232,138,180,.09); border-radius:8px; box-shadow:0 0 0 6px rgba(232,138,180,.09); }
+  .para-btn { display:inline-flex; align-items:center; gap:3px; vertical-align:middle; margin-left:6px; background:rgba(255,255,255,.75); border:1px solid var(--card-edge); color:var(--text-dim); border-radius:14px; font-family:var(--sans); font-size:11.5px; line-height:1; padding:3px 8px; cursor:pointer; opacity:.55; transition:opacity .15s, background .15s; }
+  .para-wrap:hover .para-btn, .para-btn.on, .para-btn.has { opacity:1; }
+  .para-btn.has { background:var(--gold); border-color:var(--gold); color:#fff; font-weight:700; }
+  .para-btn:hover { background:#fff; opacity:1; }
+  .para-btn.has:hover { background:var(--gold); filter:brightness(1.06); }
+  .para-panel { display:none; margin:8px 0 14px; padding:10px 12px; border-left:3px solid var(--gold); background:rgba(255,255,255,.5); border-radius:0 10px 10px 0; }
+  .para-panel.on { display:block; }
+  .para-panel .pc-item { display:flex; flex-direction:column; gap:2px; padding:7px 0; border-bottom:1px dashed var(--card-edge); }
+  .para-panel .pc-item:last-of-type { border-bottom:none; }
+  .para-panel .pc-head { display:flex; align-items:center; gap:7px; }
+  .para-panel .pc-author { font-family:var(--sans); font-size:12px; font-weight:700; color:var(--ink); }
+  .para-panel .pc-time { font-size:10.5px; color:var(--text-dim); margin-right:auto; }
+  .para-panel .pc-del { background:none; border:none; color:var(--text-dim); font-size:10.5px; cursor:pointer; padding:2px 4px; opacity:.6; }
+  .para-panel .pc-del:hover { opacity:1; color:#c0392b; }
+  .para-panel .pc-text { font-size:13.5px; line-height:1.55; color:var(--text); white-space:pre-wrap; word-break:break-word; }
+  .para-panel .pc-empty { font-size:12.5px; color:var(--text-dim); padding:2px 0 8px; }
+  .para-panel .pc-row { display:flex; gap:6px; align-items:flex-end; margin-top:8px; }
+  .para-panel .pc-row textarea { flex:1; resize:none; min-height:36px; max-height:110px; padding:8px 10px; border:1px solid var(--card-edge); border-radius:10px; background:rgba(255,255,255,.8); color:var(--text); font-family:var(--serif); font-size:13.5px; line-height:1.5; outline:none; }
+  .para-panel .pc-row textarea:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(232,138,180,.18); }
+  .para-panel .pc-row button { flex-shrink:0; padding:0 13px; height:36px; border:none; border-radius:10px; background:var(--gold); color:#fff; font-family:var(--sans); font-weight:700; font-size:12.5px; cursor:pointer; }
+  .para-panel .pc-row button:disabled { opacity:.5; cursor:default; }
+  .para-panel .pc-who { display:flex; gap:5px; margin-top:7px; }
+  .para-panel .pc-who button { font-family:var(--sans); font-size:11.5px; padding:4px 10px; border:1px solid var(--card-edge); background:rgba(255,255,255,.6); color:var(--text-dim); border-radius:16px; cursor:pointer; height:auto; font-weight:400; }
+  .para-panel .pc-who button.sel { background:var(--gold); border-color:var(--gold); color:#fff; font-weight:700; }
+  .para-orphan { font-size:11.5px; color:var(--text-dim); margin-bottom:6px; font-family:var(--sans); }
   .comment-list { display:flex; flex-direction:column; gap:10px; margin-bottom:14px; }
   .comment-item { display:flex; flex-direction:column; gap:3px; padding:10px 12px; background:rgba(255,255,255,.55); border:1px solid var(--card-edge); border-radius:12px; }
   .comment-item .c-head { display:flex; align-items:center; gap:8px; }
@@ -613,6 +641,12 @@
   .lightbox.active { display:flex; }
   .lightbox img { width:100%; height:100%; max-width:none; max-height:none; object-fit:contain; border-radius:0; user-select:none; -webkit-user-drag:none; cursor:zoom-out; transition:transform .18s ease; }
   .lightbox img.zoomed { object-fit:contain; cursor:grab; }
+  .float-x { position:fixed; right:18px; bottom:calc(22px + env(safe-area-inset-bottom, 0px)); width:52px; height:52px; border-radius:50%; background:var(--gold); color:#fff; border:none; font-size:26px; line-height:1; cursor:pointer; z-index:2600; display:none; align-items:center; justify-content:center; padding:0; box-shadow:0 6px 20px rgba(0,0,0,.28); }
+  .float-x.on { display:flex; }
+  .float-x:active { transform:scale(.94); }
+  .float-x .lbl { position:absolute; right:60px; white-space:nowrap; font-family:var(--sans); font-size:12.5px; background:rgba(0,0,0,.6); color:#fff; padding:4px 9px; border-radius:8px; opacity:0; transition:opacity .15s; pointer-events:none; }
+  .float-x:hover .lbl { opacity:1; }
+  @media (max-width: 520px) { .float-x { right:14px; bottom:calc(16px + env(safe-area-inset-bottom, 0px)); width:48px; height:48px; } .float-x .lbl { display:none; } }
   .lb-close { position:absolute; top:14px; right:18px; background:rgba(255,255,255,.16); border:none; color:#fff; font-size:26px; width:44px; height:44px; border-radius:50%; cursor:pointer; z-index:3001; }
   .lb-arrow { position:absolute; top:50%; transform:translateY(-50%); width:52px; height:52px; border-radius:50%; background:rgba(255,255,255,.16); border:none; color:#fff; font-size:32px; line-height:1; cursor:pointer; z-index:3001; display:flex; align-items:center; justify-content:center; padding:0; }
   .lb-arrow:hover { background:rgba(255,255,255,.3); }
@@ -857,7 +891,7 @@
   </div>
 </div>
 
-<div class="overlay" id="addOverlay">
+<div class="overlay" id="addOverlay"><button class="float-x" id="addFloatX" type="button" aria-label="작성 화면 닫기"><span class="lbl">닫기</span>×</button>
   <div class="modal" role="dialog" aria-modal="true">
     <div class="modal-head"><h2 id="addTitle">오늘의 추억</h2><span class="draft-tag" id="draftTag"></span><button class="x" id="addClose" aria-label="닫기">×</button></div>
     <div class="modal-body">
@@ -950,7 +984,7 @@
 </div>
 
 <!-- ============ DETAIL MODAL ============ -->
-<div class="overlay" id="detailOverlay">
+<div class="overlay" id="detailOverlay"><button class="float-x" id="detailFloatX" type="button" aria-label="닫기"><span class="lbl">닫기</span>×</button>
   <div class="modal modal-lg" role="dialog" aria-modal="true">
     <div class="gallery-wrap" id="galleryWrap" style="display:none">
       <div class="detail-gallery" id="detailGallery"></div>
@@ -963,7 +997,6 @@
       <div class="detail-meta" id="detailMeta"></div>
       <div class="detail-moods" id="detailMoods"></div>
       <div class="detail-content" id="detailContent"></div>
-      <div class="react-bar" id="reactBar"></div>
       <div class="detail-foot"><span id="detailFoot"></span><span class="detail-acts"><button class="edit-link" id="detailEdit">수정</button><button class="del-link" id="detailDel">이 추억 지우기</button></span></div>
       <div class="comments" id="commentSection">
         <div class="comments-title">댓글 <span id="commentCount"></span></div>
@@ -1006,6 +1039,7 @@ let settings = null;
 let memories = [];
 let memUnsub = null;
 let draftPhotos = [], draftMoods = [], draftAuthor = null, editingId = null, draftCoverIdx = 0;
+var draftOrigCover = null, draftOrigCoverId = null, gridRenderPending = false;
 
 const MOODS = [
   { e: "❤️", t: "사랑" }, { e: "😊", t: "행복" }, { e: "😂", t: "웃음" }, { e: "🤗", t: "포근" },
@@ -1225,7 +1259,27 @@ function subscribeMemories() {
     renderList();
     if (detailCurrent) {
       var fresh = memories.filter(function (m) { return m.id === detailCurrent.id; })[0];
-      if (fresh) { detailCurrent = fresh; renderComments(fresh); }
+      if (fresh) {
+        detailCurrent = fresh;
+        renderComments(fresh);
+        var host = $("detailContent");
+        var wraps = Array.prototype.slice.call(host.querySelectorAll(".para-wrap"));
+        var openIdx = [];
+        wraps.forEach(function (w, wi) {
+          var pp = w.querySelector(".para-panel");
+          if (pp && pp.classList.contains("on")) openIdx.push(wi);
+        });
+        var focused = document.activeElement && document.activeElement.tagName === "TEXTAREA";
+        if (!focused) {
+          host.innerHTML = fresh.content || "";
+          renderParaComments(fresh);
+          var nw = host.querySelectorAll(".para-wrap");
+          openIdx.forEach(function (wi) {
+            var w = nw[wi];
+            if (w) { var b = w.querySelector(".para-btn"); if (b) b.click(); }
+          });
+        }
+      }
     }
   }, function () {
     area.innerHTML = '<div class="empty"><h2>잠시 문제가 생겼어요</h2><p>새로고침하면 다시 불러와요.</p></div>';
@@ -1327,8 +1381,7 @@ function makeCardEl(m, i) {
   var excerptHtml = stripTags(m.content).trim() ? '<div class="excerpt">' + m.content + "</div>" : "";
   var cn = commentsOf(m).length, seen = getSeen(m.id);
   var commentHtml = cn > 0 ? '<span class="cmt-count">💬 ' + cn + '</span>' : "";
-  var rarr = reactsOf(m), reactHtml = "";
-  if (rarr.length) { var rc = {}; rarr.forEach(function (r) { rc[r.e] = (rc[r.e] || 0) + 1; }); var rkeys = Object.keys(rc).sort(function (a, b) { return rc[b] - rc[a]; }).slice(0, 3); reactHtml = '<span class="react-mini">' + rkeys.map(function (e) { return e + rc[e]; }).join(" ") + "</span>"; }
+  var reactHtml = "";
   var newBadge = cn > seen ? '<span class="new-badge">새 댓글 ' + (cn - seen) + '</span>' : "";
   card.innerHTML = photoHtml + favBtn + '<div class="body"><div class="meta"><span class="date">' + esc(fmtDateRange(m)) + "</span>" + moodHtml + "</div><h3>" + titleHtml + "</h3>" + excerptHtml + '<div class="foot"><span class="author">' + esc(m.author || "") + "</span>" + placeHtml + reactHtml + commentHtml + newBadge + "</div></div>";
   card.onclick = function () { openDetail(m); };
@@ -1462,15 +1515,37 @@ function openAdd(editMem) {
     $("memContent").innerHTML = editMem.content || "";
     draftMoods = moodsOf(editMem).slice();
     draftAuthor = editMem.author || null;
-    draftPhotos = []; draftSel = []; lastPickIdx = -1;
+    draftSel = []; lastPickIdx = -1;
     draftCoverIdx = editMem.coverIdx || 0;
+    /* 이미 올라간 사진은 ID를 그대로 들고 있다가 저장할 때 재사용 (재업로드 없음) */
+    var exIds = (editMem.photoIds && editMem.photoIds.length) ? editMem.photoIds.slice() : [];
+    if (exIds.length) {
+      draftPhotos = exIds.map(function (pid) { return { d: null, id: pid }; });
+    } else {
+      draftPhotos = photosOf(editMem).map(function (b64) { return { d: b64, id: null }; });
+    }
+    draftOrigCover = editMem.cover || null;
+    draftOrigCoverId = (exIds.length && typeof editMem.coverIdx === "number" && exIds[editMem.coverIdx]) ? exIds[editMem.coverIdx] : null;
     renderPhotoGrid();
-    $("photoDrop").textContent = "사진 불러오는 중…";
-    loadPhotos(editMem).then(function (ps) { draftPhotos = ps; renderPhotoGrid(); $("photoDrop").textContent = dropLabel(); });
+    var photoTotal = draftPhotos.length, photoGot = 0;
+    if (photoTotal) $("photoDrop").textContent = "사진 불러오는 중… (0/" + photoTotal + ")";
+    loadPhotosEach(editMem, function (i, src) {
+      if (editingId !== editMem.id) return;
+      var slot = draftPhotos.filter(function (x) { return x.id === (exIds[i] || null); })[0];
+      if (exIds.length) { if (slot) slot.d = src; }
+      else if (draftPhotos[i]) draftPhotos[i].d = src;
+      photoGot++;
+      $("photoDrop").textContent = photoGot >= photoTotal ? dropLabel() : ("사진 불러오는 중… (" + photoGot + "/" + photoTotal + ")");
+      if (!gridRenderPending) {
+        gridRenderPending = true;
+        requestAnimationFrame(function () { gridRenderPending = false; renderPhotoGrid(); });
+      }
+    });
+    if (!photoTotal) $("photoDrop").textContent = dropLabel();
   } else {
     $("memDate").value = todayStr(); $("memEndDate").value = ""; $("memPlace").value = ""; $("memPw").value = "";
     $("memTitle").innerHTML = ""; $("memContent").innerHTML = "";
-    draftPhotos = []; draftMoods = []; draftAuthor = null; draftCoverIdx = 0; draftSel = []; lastPickIdx = -1;
+    draftPhotos = []; draftMoods = []; draftAuthor = null; draftCoverIdx = 0; draftSel = []; lastPickIdx = -1; draftOrigCover = null; draftOrigCoverId = null;
     renderPhotoGrid(); $("photoDrop").textContent = dropLabel();
     var d = getDraft();
     if (d && !d.editingId) {
@@ -1489,7 +1564,7 @@ function openAdd(editMem) {
   for (var i = 0; i < auths.length; i++) auths[i].classList.toggle("sel", !!draftAuthor && auths[i].textContent === draftAuthor);
   $("addOverlay").classList.add("active"); document.body.style.overflow = "hidden";
 }
-function closeAdd() { $("addOverlay").classList.remove("active"); document.body.style.overflow = ""; }
+function closeAdd() { $("addOverlay").classList.remove("active"); document.body.style.overflow = ""; $("addFloatX").classList.remove("on"); }
 
 var DRAFT_KEY = "mem_draft_v1";
 var draftSaveTimer = null;
@@ -1526,7 +1601,7 @@ function applyDraftToForm(d) {
 }
 
 var TOTAL_PHOTO_LIMIT = 950000; // 한 추억의 모든 사진 합계 한도(바이트). Firestore 1MB 문서 여유분.
-function curPhotoBytes() { var s = 0; for (var i = 0; i < draftPhotos.length; i++) s += draftPhotos[i].length * 0.75; return s; }
+function curPhotoBytes() { var s = 0; for (var i = 0; i < draftPhotos.length; i++) { var d = draftPhotos[i] && draftPhotos[i].d; if (d) s += d.length * 0.75; } return s; }
 function compressImage(file, targetBytes) {
   return new Promise(function (resolve, reject) {
     var reader = new FileReader();
@@ -1574,7 +1649,7 @@ function handleFiles(files) {
   for (var i = 0; i < Math.min(LANES, total); i++) lanes.push(lane());
   Promise.all(lanes).then(function () {
     var okCnt = 0;
-    for (var k = 0; k < total; k++) if (out[k]) { draftPhotos.push(out[k]); okCnt++; }
+    for (var k = 0; k < total; k++) if (out[k]) { draftPhotos.push({ d: out[k], id: null }); okCnt++; }
     renderPhotoGrid(); $("photoDrop").textContent = dropLabel();
     if (okCnt < total) toast("일부 사진을 불러오지 못했어요.");
     if (draftPhotos.length > 40) toast("사진이 아주 많으면 저장·불러오기가 조금 느려질 수 있어요.");
@@ -1625,9 +1700,11 @@ function renderPhotoGrid() {
   var g = $("photoGrid"); g.innerHTML = "";
   if (draftCoverIdx >= draftPhotos.length) draftCoverIdx = 0;
   draftSel = draftSel.filter(function (i) { return i >= 0 && i < draftPhotos.length; });
-  draftPhotos.forEach(function (b64, idx) {
+  draftPhotos.forEach(function (ph, idx) {
+    var b64 = ph && ph.d;
     var d = document.createElement("div"); d.className = "photo-thumb" + (isPicked(idx) ? " picked" : ""); d.dataset.idx = idx;
-    var im = document.createElement("img"); im.src = b64; im.alt = ""; im.draggable = false;
+    var im = document.createElement("img"); im.alt = ""; im.draggable = false;
+    if (b64) im.src = b64; else im.className = "ph-load";
     var rm = document.createElement("button"); rm.className = "remove"; rm.type = "button"; rm.textContent = "×"; rm.setAttribute("aria-label", "사진 빼기");
     rm.onclick = function () {
       draftPhotos.splice(idx, 1);
@@ -1710,9 +1787,12 @@ async function saveMemory() {
   $("saveBtn").textContent = editing ? "수정하는 중…" : "간직하는 중…";
   try {
     // 사진을 각각 별도 문서로 저장 (추억 문서 용량 제한을 피해 장수 제한을 없앰)
-    var upDone = 0, upTotal = draftPhotos.length;
-    var photoIds = await Promise.all(draftPhotos.map(function (b64, i) {
-      return addDoc(collection(db, PHOTO_COL), { data: b64, order: i, createdAt: Date.now() }).then(function (pref) {
+    var upDone = 0, upTotal = 0;
+    for (var ui = 0; ui < draftPhotos.length; ui++) if (!draftPhotos[ui].id) upTotal++;
+    var photoIds = await Promise.all(draftPhotos.map(function (ph, i) {
+      if (ph.id) return Promise.resolve(ph.id);          /* 이미 올라간 사진 → 그대로 재사용 */
+      return addDoc(collection(db, PHOTO_COL), { data: ph.d, order: i, createdAt: Date.now() }).then(function (pref) {
+        ph.id = pref.id;
         upDone++;
         if (upTotal > 1) $("saveBtn").textContent = "사진 올리는 중… (" + upDone + "/" + upTotal + ")";
         return pref.id;
@@ -1720,12 +1800,23 @@ async function saveMemory() {
     }));
     $("saveBtn").textContent = editing ? "수정하는 중…" : "간직하는 중…";
     var ci = (draftCoverIdx >= 0 && draftCoverIdx < draftPhotos.length) ? draftCoverIdx : 0;
-    var cover = draftPhotos.length ? await makeThumb(draftPhotos[ci]) : null;
+    var cover = null;
+    if (draftPhotos.length) {
+      var cph = draftPhotos[ci];
+      if (!cph.d && cph.id && cph.id === draftOrigCoverId && draftOrigCover) cover = draftOrigCover;  /* 대표가 그대로면 썸네일도 재사용 */
+      else if (cph.d) cover = await makeThumb(cph.d);
+      else if (cph.id) {
+        if (_photoDocCache[cph.id]) cover = await makeThumb(_photoDocCache[cph.id]);
+        else { try { var cs = await getDoc(doc(db, PHOTO_COL, cph.id)); if (cs.exists() && cs.data().data) cover = await makeThumb(cs.data().data); } catch (ce) {} }
+      }
+      if (!cover) cover = draftOrigCover || null;
+    }
     var fields = { date: date, endDate: endDate, title: title, content: content, place: place, moods: draftMoods.slice(), author: draftAuthor || settings.name1, cover: cover, coverIdx: ci, photoIds: photoIds, photoCount: draftPhotos.length, photos: [], pw: pw };
     if (editing) {
       var old = memories.filter(function (x) { return x.id === editing; })[0];
       if (old && old.photoIds && old.photoIds.length) {
-        await Promise.all(old.photoIds.map(function (pid) {
+        var gone = old.photoIds.filter(function (pid) { return photoIds.indexOf(pid) < 0; });
+        await Promise.all(gone.map(function (pid) {       /* 빠진 사진만 정리 */
           delete _photoDocCache[pid];
           return deleteDoc(doc(db, PHOTO_COL, pid)).catch(function () {});
         }));
@@ -1850,18 +1941,36 @@ function setupLightbox() {
 
   /* 포인터: 확대 상태면 이동, 아니면 좌우 스와이프 / 탭하면 닫기 */
   var down = false, sx = 0, sy = 0, moved = 0, baseX = 0, baseY = 0, tPrev = 0;
+  var pts = {}, pinchStart = 0, pinchBase = 1;   /* 손가락 두 개 확대 */
+  function pinchDist() {
+    var k = Object.keys(pts);
+    if (k.length < 2) return 0;
+    var a = pts[k[0]], b = pts[k[1]];
+    return Math.sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+  }
   box.addEventListener("pointerdown", function (e) {
     if (e.target.closest(".lb-arrow, .lb-close, .lb-zoom")) return;
+    pts[e.pointerId] = { x: e.clientX, y: e.clientY };
+    if (Object.keys(pts).length === 2) { down = false; pinchStart = pinchDist(); pinchBase = lbScale; return; }
     down = true; moved = 0; sx = e.clientX; sy = e.clientY; baseX = lbPanX; baseY = lbPanY;
     try { box.setPointerCapture(e.pointerId); } catch (x) {}
   });
   box.addEventListener("pointermove", function (e) {
+    if (pts[e.pointerId]) { pts[e.pointerId].x = e.clientX; pts[e.pointerId].y = e.clientY; }
+    if (Object.keys(pts).length >= 2) {
+      var d = pinchDist();
+      if (pinchStart > 0 && d > 0) lbSetZoom(pinchBase * (d / pinchStart));
+      return;
+    }
     if (!down) return;
     var dx = e.clientX - sx, dy = e.clientY - sy;
     moved = Math.max(moved, Math.abs(dx), Math.abs(dy));
     if (lbScale > 1.01) { lbPanX = baseX + dx; lbPanY = baseY + dy; lbApplyTransform(); }
   });
   function endPtr(e) {
+    if (e && e.pointerId !== undefined) delete pts[e.pointerId];
+    if (Object.keys(pts).length >= 1 && pinchStart > 0) { pinchStart = 0; down = false; return; }
+    pinchStart = 0;
     if (!down) return;
     down = false;
     if (e && e.target && e.target.closest && e.target.closest(".lb-arrow, .lb-close, .lb-zoom")) return;
@@ -1877,7 +1986,7 @@ function setupLightbox() {
     }
   }
   box.addEventListener("pointerup", endPtr);
-  box.addEventListener("pointercancel", function () { down = false; });
+  box.addEventListener("pointercancel", function (e) { if (e && e.pointerId !== undefined) delete pts[e.pointerId]; down = false; pinchStart = 0; });
 }
 function openDetail(m) {
   detailCurrent = m;
@@ -1933,14 +2042,15 @@ function openDetail(m) {
   $("detailOverlay").classList.add("active"); document.body.style.overflow = "hidden";
   $("commentText").value = ""; autoGrow($("commentText"));
   renderComments(m);
+  renderParaComments(m);
 }
-function closeDetail() { $("detailOverlay").classList.remove("active"); document.body.style.overflow = ""; detailCurrent = null; renderList(); }
+function closeDetail() { $("detailOverlay").classList.remove("active"); document.body.style.overflow = ""; $("detailFloatX").classList.remove("on"); detailCurrent = null; renderList(); }
 
 /* ---------- reactions ---------- */
 var REACTS = ["❤️", "😂", "😮", "👍", "🥺"];
 function reactsOf(m) { return Array.isArray(m && m.reacts) ? m.reacts : []; }
 function renderReacts(m) {
-  var bar = $("reactBar"); if (!bar || !m) return;
+  var bar = $("reactBar"); if (!bar || !m) return;   /* 공감 기능은 v88에서 내림 */
   bar.innerHTML = "";
   var me = commentAuthor || (settings && settings.name1) || "나";
   var arr = reactsOf(m);
@@ -2600,6 +2710,139 @@ function fmtCommentTime(at) {
   return (d.getMonth() + 1) + "월 " + d.getDate() + "일 " + hh + ":" + mm;
 }
 function cidOf(c) { return c.cid || ("t" + (c.at || 0)); }
+
+/* ===== 문단 댓글 ===== */
+function paraKey(txt) {
+  var t = (txt || "").replace(/\s+/g, "").slice(0, 48);
+  if (!t) return "";
+  var h = 0;
+  for (var i = 0; i < t.length; i++) { h = (h * 31 + t.charCodeAt(i)) | 0; }
+  return "k" + (h >>> 0).toString(36);
+}
+function paraCommentsOf(m) { return commentsOf(m).filter(function (c) { return !!c.para; }); }
+function docCommentsOf(m) { return commentsOf(m).filter(function (c) { return !c.para; }); }
+function renderParaComments(m) {
+  var host = $("detailContent");
+  if (!host) return;
+  /* 본문 블록마다 감싸개 + 말풍선 버튼 */
+  var blocks = [];
+  Array.prototype.slice.call(host.children).forEach(function (el) {
+    if (el.classList && el.classList.contains("para-wrap")) return;
+    var tag = (el.tagName || "").toUpperCase();
+    if (tag === "BR" || tag === "SCRIPT" || tag === "STYLE") return;
+    if (!(el.textContent || "").trim() && tag !== "IMG") return;
+    blocks.push(el);
+  });
+  if (!blocks.length) return;
+
+  var all = paraCommentsOf(m);
+  var keys = blocks.map(function (el) { return paraKey(el.textContent); });
+  /* 글을 고쳐서 짝이 사라진 댓글은 저장 당시 순번으로 되살림 */
+  function commentsFor(i) {
+    var k = keys[i];
+    return all.filter(function (c) {
+      if (c.para === k) return true;
+      if (keys.indexOf(c.para) >= 0) return false;
+      return (typeof c.pIdx === "number") && c.pIdx === i;
+    }).sort(function (a, b) { return (a.at || 0) - (b.at || 0); });
+  }
+
+  blocks.forEach(function (el, i) {
+    var wrap = document.createElement("div");
+    wrap.className = "para-wrap";
+    el.parentNode.insertBefore(wrap, el);
+    var body = document.createElement("div");
+    body.className = "para-body";
+    wrap.appendChild(body);
+    body.appendChild(el);
+
+    var list = commentsFor(i);
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "para-btn" + (list.length ? " has" : "");
+    btn.textContent = list.length ? "💬 " + list.length : "💬";
+    btn.setAttribute("aria-label", "이 문단에 댓글");
+    body.appendChild(btn);
+    if (list.length) wrap.classList.add("has-cmt");
+
+    var panel = document.createElement("div");
+    panel.className = "para-panel";
+    wrap.appendChild(panel);
+
+    btn.onclick = function () {
+      var open = panel.classList.toggle("on");
+      btn.classList.toggle("on", open);
+      if (open) { buildParaPanel(panel, m, keys[i], i); }
+    };
+  });
+}
+function buildParaPanel(panel, m, key, idx) {
+  panel.innerHTML = "";
+  var all = paraCommentsOf(m).filter(function (c) {
+    if (c.para === key) return true;
+    return (typeof c.pIdx === "number") && c.pIdx === idx && !c.para;
+  }).sort(function (a, b) { return (a.at || 0) - (b.at || 0); });
+
+  if (!all.length) {
+    var em = document.createElement("div"); em.className = "pc-empty";
+    em.textContent = "이 문단에 남긴 이야기가 아직 없어요.";
+    panel.appendChild(em);
+  }
+  all.forEach(function (c) {
+    var it = document.createElement("div"); it.className = "pc-item";
+    var hd = document.createElement("div"); hd.className = "pc-head";
+    var au = document.createElement("span"); au.className = "pc-author"; au.textContent = c.author || "";
+    var tm = document.createElement("span"); tm.className = "pc-time"; tm.textContent = fmtCommentTime(c.at);
+    var dl = document.createElement("button"); dl.type = "button"; dl.className = "pc-del"; dl.textContent = "삭제";
+    dl.onclick = function () { deleteParaComment(cidOf(c)); };
+    hd.appendChild(au); hd.appendChild(tm); hd.appendChild(dl);
+    var tx = document.createElement("div"); tx.className = "pc-text"; tx.textContent = c.text || "";
+    it.appendChild(hd); it.appendChild(tx);
+    panel.appendChild(it);
+  });
+
+  var names = [settings && settings.name1, settings && settings.name2].filter(Boolean);
+  if (!commentAuthor || names.indexOf(commentAuthor) < 0) commentAuthor = names[0] || "나";
+  var who = document.createElement("div"); who.className = "pc-who";
+  names.forEach(function (n) {
+    var b = document.createElement("button"); b.type = "button"; b.textContent = n;
+    if (n === commentAuthor) b.className = "sel";
+    b.onclick = function () { commentAuthor = n; buildParaPanel(panel, m, key, idx); };
+    who.appendChild(b);
+  });
+  panel.appendChild(who);
+
+  var row = document.createElement("div"); row.className = "pc-row";
+  var ta = document.createElement("textarea"); ta.rows = 1; ta.placeholder = "이 문단에 한마디";
+  ta.addEventListener("input", function () { autoGrow(ta); });
+  var sd = document.createElement("button"); sd.type = "button"; sd.textContent = "등록";
+  function send() {
+    var t = (ta.value || "").trim();
+    if (!t) return;
+    sd.disabled = true;
+    sendParaComment(key, idx, t).then(function () { ta.value = ""; autoGrow(ta); }).catch(function () {}).then(function () { sd.disabled = false; });
+  }
+  sd.onclick = send;
+  ta.addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(); } });
+  row.appendChild(ta); row.appendChild(sd);
+  panel.appendChild(row);
+}
+async function sendParaComment(key, idx, text) {
+  if (!detailCurrent) return;
+  var c = { cid: "c" + Date.now() + Math.random().toString(36).slice(2, 6), at: Date.now(), author: commentAuthor || "나", text: text, para: key, pIdx: idx };
+  var ref = doc(db, MEM_COL, detailCurrent.id);
+  try {
+    await setDoc(ref, { comments: commentsOf(detailCurrent).concat([c]) }, { merge: true });
+    addRead("cmt:" + detailCurrent.id + ":" + c.cid);
+  } catch (e) { toast("댓글을 남기지 못했어요."); }
+}
+async function deleteParaComment(cid) {
+  if (!detailCurrent) return;
+  if (!confirm("이 댓글을 지울까요?")) return;
+  var remain = commentsOf(detailCurrent).filter(function (x) { return cidOf(x) !== cid; });
+  try { await updateDoc(doc(db, MEM_COL, detailCurrent.id), { comments: remain }); }
+  catch (e) { toast("삭제하지 못했어요."); }
+}
 function genCid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 function buildCommentEl(c, isReply) {
   var item = document.createElement("div");
@@ -2654,11 +2897,18 @@ function buildReplyForm(parent) {
   return wrap;
 }
 function renderComments(m) {
-  var all = commentsOf(m);
+  var all = docCommentsOf(m);
   var box = $("commentList");
+  var sec = $("commentSection");
+  /* 문단마다 댓글을 달 수 있으니, 예전에 남긴 전체 댓글이 있을 때만 이 칸을 보여줌 */
+  if (sec) sec.style.display = all.length ? "" : "none";
+  var form = document.querySelector("#commentSection .comment-form");
+  if (form) form.style.display = "none";
   $("commentCount").textContent = all.length ? all.length : "";
   if (!all.length) {
-    box.innerHTML = '<div class="comment-empty">아직 댓글이 없어요. 첫 댓글을 남겨보세요.</div>';
+    box.innerHTML = "";
+    if (m && m.id) setSeen(m.id, commentsOf(m).length);
+    return;
   } else {
     box.innerHTML = "";
     var tops = all.filter(function (c) { return !c.parent; }).sort(function (a, b) { return (a.at || 0) - (b.at || 0); });
@@ -2679,8 +2929,7 @@ function renderComments(m) {
     b.onclick = function () { commentAuthor = n; renderComments(detailCurrent); };
     who.appendChild(b);
   });
-  if (m && m.id) setSeen(m.id, all.length);
-  renderReacts(m);
+  if (m && m.id) setSeen(m.id, commentsOf(m).length);
 }
 async function addComment() {
   if (!detailCurrent) return;
@@ -3049,6 +3298,19 @@ function init() {
   });
 
   $("detailClose").onclick = closeDetail;
+  /* 글이 길어져 위쪽 × 가 안 보일 때 떠 있는 닫기 버튼 */
+  $("addFloatX").onclick = closeAdd;
+  $("detailFloatX").onclick = closeDetail;
+  function bindFloatX(overlayId, btnId) {
+    var ov = $(overlayId), btn = $(btnId);
+    var sc = ov.querySelector(".modal-body") || ov;
+    function upd() { btn.classList.toggle("on", (sc.scrollTop || 0) > 160); }
+    sc.addEventListener("scroll", upd, { passive: true });
+    ov.addEventListener("scroll", upd, { passive: true });
+    ov.__updFloatX = upd;
+  }
+  bindFloatX("addOverlay", "addFloatX");
+  bindFloatX("detailOverlay", "detailFloatX");
   $("detailDel").onclick = deleteCurrent;
   $("detailEdit").onclick = editCurrent;
   $("tabHome").onclick = function () { closeCal(); closeMore(); closePlan(); closeBucket(); setTab("home"); window.scrollTo({ top: 0, behavior: "smooth" }); };
