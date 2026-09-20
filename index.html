@@ -361,12 +361,14 @@
   #addOverlay .modal { display:flex; flex-direction:column; max-height:calc(100vh - 48px); max-height:calc(100dvh - 48px); }
   #addOverlay .modal-head { flex:0 0 auto; }
   #addOverlay .modal-body { flex:1 1 auto; overflow-y:auto; -webkit-overflow-scrolling:touch; }
-  #addOverlay .rich-toolbar { position:sticky; top:-2px; z-index:40;
-    background:rgba(255,248,252,.97); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
-    box-shadow:0 6px 14px -8px rgba(120,90,130,.45); }
+  #addOverlay .rich-toolbar { position:sticky; top:0; z-index:40; background:rgba(255,255,255,.55); }
+  /* 툴바 뒤로 본문이 비쳐 보이지 않게 여백까지 덮어줌 */
+  #addOverlay .rich-toolbar::before { content:""; position:absolute; left:-22px; right:-22px; top:-19px; bottom:-7px;
+    background:#fff8fc; z-index:-1; box-shadow:0 9px 13px -10px rgba(120,90,130,.5); }
   @media (max-width: 520px) {
     #addOverlay .modal { max-height:calc(100dvh - 24px); }
     #addOverlay .rich-toolbar { padding:5px 6px; gap:0; }
+    #addOverlay .rich-toolbar::before { left:-18px; right:-18px; }
     #addOverlay .rich-toolbar button { height:32px; min-width:32px; padding:0 6px; }
     #addOverlay .rich-toolbar .sep { margin:0 4px; }
   }
