@@ -453,6 +453,11 @@
   .para-panel .pc-edit { background:none; border:none; color:var(--text-dim); font-size:10.5px; cursor:pointer; padding:2px 4px; opacity:.7; }
   .para-panel .pc-edit:hover { opacity:1; color:var(--gold); }
   .para-panel .pc-mark { font-size:10.5px; color:var(--text-dim); opacity:.7; }
+  .para-panel .pc-like { display:inline-flex; align-items:center; gap:4px; background:none; border:none; cursor:pointer; padding:3px 6px; border-radius:12px; font-family:var(--sans); font-size:11px; color:var(--text-dim); opacity:.65; transition:opacity .15s, background .15s; }
+  .para-panel .pc-like:hover { opacity:1; background:rgba(232,138,180,.12); }
+  .para-panel .pc-like svg { width:13px; height:13px; }
+  .para-panel .pc-like.on { opacity:1; color:var(--gold); font-weight:700; }
+  .para-panel .pc-like .who { font-size:10.5px; letter-spacing:-.01em; }
   .para-panel .pc-editbox { display:flex; flex-direction:column; gap:6px; margin-top:5px; }
   .para-panel .pc-editbox textarea { resize:none; min-height:40px; max-height:130px; padding:8px 10px; border:1px solid var(--gold); border-radius:10px; background:#fff; color:var(--text); font-family:var(--serif); font-size:13.5px; line-height:1.5; outline:none; }
   .para-panel .pc-editacts { display:flex; gap:6px; justify-content:flex-end; }
@@ -918,7 +923,7 @@
 
 <div class="overlay" id="addOverlay"><button class="float-x" id="addFloatX" type="button" aria-label="작성 화면 닫기"><span class="lbl">닫기</span>×</button>
   <div class="modal" role="dialog" aria-modal="true">
-    <div class="modal-head"><h2 id="addTitle">오늘의 추억</h2><span class="draft-tag" id="draftTag"></span><span class="ver-tag" id="verTag">v92</span><button class="x" id="addClose" aria-label="닫기">×</button></div>
+    <div class="modal-head"><h2 id="addTitle">오늘의 추억</h2><span class="draft-tag" id="draftTag"></span><span class="ver-tag" id="verTag">v93</span><button class="x" id="addClose" aria-label="닫기">×</button></div>
     <div class="modal-body">
       <div class="field">
         <div class="photo-drop" id="photoDrop">📷 사진 더하기 (여러 장 가능, 선택)</div>
@@ -2854,6 +2859,7 @@ function buildParaPanel(panel, m, key, idx) {
     ed.onclick = function () { editingParaCid = cidOf(c); buildParaPanel(panel, m, key, idx); };
     var dl = document.createElement("button"); dl.type = "button"; dl.className = "pc-del"; dl.textContent = "삭제";
     dl.onclick = function () { deleteParaComment(cidOf(c)); };
+    hd.appendChild(makeLikeBtn(c));
     hd.appendChild(ed); hd.appendChild(dl);
     var tx = document.createElement("div"); tx.className = "pc-text"; tx.textContent = c.text || "";
     it.appendChild(hd); it.appendChild(tx);
@@ -2894,6 +2900,46 @@ async function sendParaComment(key, idx, text) {
     await setDoc(ref, { comments: commentsOf(detailCurrent).concat([c]) }, { merge: true });
     addRead("cmt:" + detailCurrent.id + ":" + c.cid);
   } catch (e) { toast("댓글을 남기지 못했어요."); }
+}
+/* 댓글에 다는 하트 — 내가 읽고 공감했다는 표시 */
+function likesOf(c) { return Array.isArray(c && c.likes) ? c.likes : []; }
+function meName() {
+  var names = [settings && settings.name1, settings && settings.name2].filter(Boolean);
+  if (!commentAuthor || names.indexOf(commentAuthor) < 0) commentAuthor = names[0] || "나";
+  return commentAuthor;
+}
+function makeLikeBtn(c) {
+  var arr = likesOf(c), me = meName();
+  var mine = arr.some(function (l) { return l.a === me; });
+  var b = document.createElement("button");
+  b.type = "button";
+  b.className = "pc-like" + (mine ? " on" : "");
+  b.setAttribute("aria-label", mine ? "하트 취소" : "하트 남기기");
+  b.innerHTML = '<svg viewBox="0 0 24 24" fill="' + (mine ? "currentColor" : "none") + '" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.6 3.9 12.9a5 5 0 0 1 7.1-7l1 1 1-1a5 5 0 0 1 7.1 7z"></path></svg>';
+  if (arr.length) {
+    var who = document.createElement("span");
+    who.className = "who";
+    who.textContent = arr.map(function (l) { return l.a; }).join(", ");
+    b.appendChild(who);
+  }
+  b.onclick = function (e) { e.stopPropagation(); toggleParaLike(cidOf(c)); };
+  return b;
+}
+async function toggleParaLike(cid) {
+  if (!detailCurrent) return;
+  var me = meName();
+  var all = commentsOf(detailCurrent).map(function (x) {
+    if (cidOf(x) !== cid) return x;
+    var y = {}; for (var k in x) y[k] = x[k];
+    var arr = likesOf(x).slice();
+    var i = -1;
+    for (var j = 0; j < arr.length; j++) { if (arr[j].a === me) { i = j; break; } }
+    if (i > -1) arr.splice(i, 1); else arr.push({ a: me, at: Date.now() });
+    y.likes = arr;
+    return y;
+  });
+  try { await updateDoc(doc(db, MEM_COL, detailCurrent.id), { comments: all }); }
+  catch (e) { toast("하트를 남기지 못했어요."); }
 }
 async function saveParaCommentEdit(cid, text) {
   if (!detailCurrent) return;
