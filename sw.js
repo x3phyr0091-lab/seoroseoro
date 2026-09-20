@@ -1,5 +1,5 @@
 /* 서로서로 서비스워커 — v82 */
-var CACHE = "seoroseoro-v82";
+var CACHE = "seoroseoro-v91";
 var ASSETS = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 
 /* 설치: 기본 파일 미리 저장 */
@@ -36,8 +36,12 @@ self.addEventListener("fetch", function (e) {
   /* 파이어베이스·폰트·CDN 같은 외부 요청은 건드리지 않음 */
   if (url.origin !== self.location.origin) return;
 
+  /* index.html 은 브라우저 캐시를 건너뛰고 항상 새로 받아옴 (옛 화면이 뜨는 문제 방지) */
+  var isDoc = req.mode === "navigate" || /(^|\/)(index\.html)?$/.test(url.pathname);
+  var hit = isDoc ? new Request(req.url, { cache: "reload", credentials: "same-origin" }) : req;
+
   e.respondWith(
-    fetch(req)
+    fetch(hit)
       .then(function (res) {
         if (res && res.status === 200 && res.type === "basic") {
           var copy = res.clone();

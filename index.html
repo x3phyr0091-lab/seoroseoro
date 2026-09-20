@@ -272,6 +272,7 @@
   .btn-ghost { flex: 0 0 auto; background: rgba(255,255,255,.5); border: 1px solid var(--card-edge); color: var(--text-dim); font-family: var(--sans); font-weight: 600; border-radius: 14px; padding: 0 16px; cursor: pointer; }
   .btn-ghost:hover { border-color: var(--gold); color: var(--ink); }
   .save-row .btn-gold { flex: 1; }
+  .ver-tag { font-family:var(--sans); font-size:10.5px; color:var(--text-dim); opacity:.55; letter-spacing:.04em; margin-left:auto; margin-right:10px; }
   .draft-tag { font-size: 11.5px; color: var(--gold); font-family: var(--sans); font-weight: 700; opacity: 0; transition: opacity .3s; margin-left: 8px; margin-right: auto; }
   .draft-tag.show { opacity: 1; }
   .save-row .btn-gold { margin-top: 0; }
@@ -449,6 +450,15 @@
   .para-panel .pc-time { font-size:10.5px; color:var(--text-dim); margin-right:auto; }
   .para-panel .pc-del { background:none; border:none; color:var(--text-dim); font-size:10.5px; cursor:pointer; padding:2px 4px; opacity:.6; }
   .para-panel .pc-del:hover { opacity:1; color:#c0392b; }
+  .para-panel .pc-edit { background:none; border:none; color:var(--text-dim); font-size:10.5px; cursor:pointer; padding:2px 4px; opacity:.7; }
+  .para-panel .pc-edit:hover { opacity:1; color:var(--gold); }
+  .para-panel .pc-mark { font-size:10.5px; color:var(--text-dim); opacity:.7; }
+  .para-panel .pc-editbox { display:flex; flex-direction:column; gap:6px; margin-top:5px; }
+  .para-panel .pc-editbox textarea { resize:none; min-height:40px; max-height:130px; padding:8px 10px; border:1px solid var(--gold); border-radius:10px; background:#fff; color:var(--text); font-family:var(--serif); font-size:13.5px; line-height:1.5; outline:none; }
+  .para-panel .pc-editacts { display:flex; gap:6px; justify-content:flex-end; }
+  .para-panel .pc-editacts button { padding:5px 13px; height:auto; border-radius:9px; font-family:var(--sans); font-size:12px; cursor:pointer; border:none; }
+  .para-panel .pc-editacts .ok { background:var(--gold); color:#fff; font-weight:700; }
+  .para-panel .pc-editacts .no { background:rgba(255,255,255,.75); border:1px solid var(--card-edge); color:var(--text-dim); }
   .para-panel .pc-text { font-size:13.5px; line-height:1.55; color:var(--text); white-space:pre-wrap; word-break:break-word; }
   .para-panel .pc-empty { font-size:12.5px; color:var(--text-dim); padding:2px 0 8px; }
   .para-panel .pc-row { display:flex; gap:6px; align-items:flex-end; margin-top:8px; }
@@ -908,7 +918,7 @@
 
 <div class="overlay" id="addOverlay"><button class="float-x" id="addFloatX" type="button" aria-label="작성 화면 닫기"><span class="lbl">닫기</span>×</button>
   <div class="modal" role="dialog" aria-modal="true">
-    <div class="modal-head"><h2 id="addTitle">오늘의 추억</h2><span class="draft-tag" id="draftTag"></span><button class="x" id="addClose" aria-label="닫기">×</button></div>
+    <div class="modal-head"><h2 id="addTitle">오늘의 추억</h2><span class="draft-tag" id="draftTag"></span><span class="ver-tag" id="verTag">v92</span><button class="x" id="addClose" aria-label="닫기">×</button></div>
     <div class="modal-body">
       <div class="field">
         <div class="photo-drop" id="photoDrop">📷 사진 더하기 (여러 장 가능, 선택)</div>
@@ -1055,6 +1065,7 @@ let memories = [];
 let memUnsub = null;
 let draftPhotos = [], draftMoods = [], draftAuthor = null, editingId = null, draftCoverIdx = 0;
 var draftOrigCover = null, draftOrigCoverId = null, gridRenderPending = false;
+var editingParaCid = null;
 
 const MOODS = [
   { e: "❤️", t: "사랑" }, { e: "😊", t: "행복" }, { e: "😂", t: "웃음" }, { e: "🤗", t: "포근" },
@@ -2059,7 +2070,7 @@ function openDetail(m) {
   renderComments(m);
   renderParaComments(m);
 }
-function closeDetail() { $("detailOverlay").classList.remove("active"); document.body.style.overflow = ""; $("detailFloatX").classList.remove("on"); detailCurrent = null; renderList(); }
+function closeDetail() { $("detailOverlay").classList.remove("active"); document.body.style.overflow = ""; $("detailFloatX").classList.remove("on"); editingParaCid = null; detailCurrent = null; renderList(); }
 
 /* ---------- reactions ---------- */
 var REACTS = ["❤️", "😂", "😮", "👍", "🥺"];
@@ -2807,10 +2818,43 @@ function buildParaPanel(panel, m, key, idx) {
     var it = document.createElement("div"); it.className = "pc-item";
     var hd = document.createElement("div"); hd.className = "pc-head";
     var au = document.createElement("span"); au.className = "pc-author"; au.textContent = c.author || "";
-    var tm = document.createElement("span"); tm.className = "pc-time"; tm.textContent = fmtCommentTime(c.at);
+    var tm = document.createElement("span"); tm.className = "pc-time";
+    tm.textContent = fmtCommentTime(c.at) + (c.edited ? " · 수정됨" : "");
+    hd.appendChild(au); hd.appendChild(tm);
+
+    if (editingParaCid === cidOf(c)) {
+      it.appendChild(hd);
+      var box = document.createElement("div"); box.className = "pc-editbox";
+      var ta = document.createElement("textarea"); ta.value = c.text || "";
+      ta.addEventListener("input", function () { autoGrow(ta); });
+      var acts = document.createElement("div"); acts.className = "pc-editacts";
+      var no = document.createElement("button"); no.type = "button"; no.className = "no"; no.textContent = "취소";
+      no.onclick = function () { editingParaCid = null; buildParaPanel(panel, m, key, idx); };
+      var ok = document.createElement("button"); ok.type = "button"; ok.className = "ok"; ok.textContent = "저장";
+      function commit() {
+        var t = (ta.value || "").trim();
+        if (!t) { toast("내용을 입력해주세요."); return; }
+        ok.disabled = true;
+        saveParaCommentEdit(cidOf(c), t).catch(function () {}).then(function () { ok.disabled = false; });
+      }
+      ok.onclick = commit;
+      ta.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); commit(); }
+        if (e.key === "Escape") { e.preventDefault(); editingParaCid = null; buildParaPanel(panel, m, key, idx); }
+      });
+      acts.appendChild(no); acts.appendChild(ok);
+      box.appendChild(ta); box.appendChild(acts);
+      it.appendChild(box);
+      panel.appendChild(it);
+      setTimeout(function () { ta.focus(); autoGrow(ta); try { ta.setSelectionRange(ta.value.length, ta.value.length); } catch (x) {} }, 0);
+      return;
+    }
+
+    var ed = document.createElement("button"); ed.type = "button"; ed.className = "pc-edit"; ed.textContent = "수정";
+    ed.onclick = function () { editingParaCid = cidOf(c); buildParaPanel(panel, m, key, idx); };
     var dl = document.createElement("button"); dl.type = "button"; dl.className = "pc-del"; dl.textContent = "삭제";
     dl.onclick = function () { deleteParaComment(cidOf(c)); };
-    hd.appendChild(au); hd.appendChild(tm); hd.appendChild(dl);
+    hd.appendChild(ed); hd.appendChild(dl);
     var tx = document.createElement("div"); tx.className = "pc-text"; tx.textContent = c.text || "";
     it.appendChild(hd); it.appendChild(tx);
     panel.appendChild(it);
@@ -2850,6 +2894,18 @@ async function sendParaComment(key, idx, text) {
     await setDoc(ref, { comments: commentsOf(detailCurrent).concat([c]) }, { merge: true });
     addRead("cmt:" + detailCurrent.id + ":" + c.cid);
   } catch (e) { toast("댓글을 남기지 못했어요."); }
+}
+async function saveParaCommentEdit(cid, text) {
+  if (!detailCurrent) return;
+  var all = commentsOf(detailCurrent).map(function (x) {
+    if (cidOf(x) !== cid) return x;
+    var y = {}; for (var k in x) y[k] = x[k];
+    y.text = text; y.edited = true; y.editedAt = Date.now();
+    return y;
+  });
+  editingParaCid = null;
+  try { await updateDoc(doc(db, MEM_COL, detailCurrent.id), { comments: all }); }
+  catch (e) { toast("수정하지 못했어요."); }
 }
 async function deleteParaComment(cid) {
   if (!detailCurrent) return;
