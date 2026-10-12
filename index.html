@@ -664,6 +664,7 @@
   .photo-thumb .cover-badge { position:absolute; left:4px; top:4px; background:rgba(232,138,180,.95); color:#fff; font-size:10.5px; font-weight:700; font-family:var(--sans); padding:3px 8px; border-radius:8px; border:none; cursor:default; }
   .photo-thumb .cover-set { position:absolute; left:4px; top:4px; background:rgba(0,0,0,.45); color:#fff; font-size:10.5px; font-weight:600; font-family:var(--sans); padding:3px 8px; border-radius:8px; border:none; cursor:pointer; opacity:.85; }
   .photo-thumb .cover-set:hover { background:rgba(232,138,180,.85); opacity:1; }
+  .photo-thumb .gifmark { position:absolute; left:4px; bottom:4px; font-family:var(--sans); font-size:9.5px; font-weight:700; letter-spacing:.06em; color:#fff; background:rgba(0,0,0,.58); border-radius:5px; padding:2px 5px; pointer-events:none; z-index:3; }
   .photo-thumb .pick { position:absolute; right:4px; bottom:4px; width:26px; height:26px; border-radius:50%; background:rgba(0,0,0,.42); border:2px solid rgba(255,255,255,.85); color:#fff; font-size:14px; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; z-index:3; }
   .photo-thumb .pick:hover { background:rgba(0,0,0,.65); }
   .photo-thumb.picked { outline:3px solid var(--gold); outline-offset:-3px; }
@@ -949,7 +950,7 @@
 
 <div class="overlay" id="addOverlay"><button class="float-x" id="addFloatX" type="button" aria-label="작성 화면 닫기"><span class="lbl">닫기</span>×</button>
   <div class="modal" role="dialog" aria-modal="true">
-    <div class="modal-head"><h2 id="addTitle">오늘의 추억</h2><span class="draft-tag" id="draftTag"></span><span class="ver-tag" id="verTag">v95</span><button class="x" id="addClose" aria-label="닫기">×</button></div>
+    <div class="modal-head"><h2 id="addTitle">오늘의 추억</h2><span class="draft-tag" id="draftTag"></span><span class="ver-tag" id="verTag">v97</span><button class="x" id="addClose" aria-label="닫기">×</button></div>
     <div class="modal-body">
       <div class="field">
         <div class="photo-drop" id="photoDrop">📷 사진 더하기 (여러 장 가능, 선택)</div>
@@ -1685,20 +1686,41 @@ function compressImage(file, targetBytes) {
     reader.onerror = reject; reader.readAsDataURL(file);
   });
 }
-function dropLabel() { return "📷 사진 더하기 (여러 장 가능, 선택)"; }
+function dropLabel() { return "📷 사진·GIF 더하기 (여러 장 가능, 선택)"; }
+/* GIF는 압축하면 움직임이 사라져서 원본 그대로 넣는다.
+   문서 한 개가 약 1MB까지라, 저장할 때 33% 불어나는 걸 감안해 720KB로 제한. */
+var GIF_MAX_BYTES = 720000;
+function isGif(f) { return !!f && (f.type === "image/gif" || /\.gif$/i.test(f.name || "")); }
+function isGifData(d) { return typeof d === "string" && d.indexOf("data:image/gif") === 0; }
+function readRaw(file) {
+  return new Promise(function (res, rej) {
+    var r = new FileReader();
+    r.onload = function (e) { res(e.target.result); };
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
 function handleFiles(files) {
   var list = Array.prototype.slice.call(files).filter(function (f) { return f && f.type && f.type.indexOf("image") === 0; });
   if (!list.length) return;
-  var done = 0, total = list.length;
+  var done = 0, total = list.length, gifFlat = 0, gifKept = 0;
   function tick() { done++; $("photoDrop").textContent = "사진 정리하는 중… (" + done + "/" + total + ")"; }
   $("photoDrop").textContent = "사진 정리하는 중… (0/" + total + ")";
   /* 한 장씩 기다리지 않고 3장씩 동시에 — 순서는 그대로 유지 */
-  var out = new Array(total), next = 0, LANES = 3;
+  var out = new Array(total), isAnim = new Array(total), next = 0, LANES = 3;
   function lane() {
     if (next >= total) return Promise.resolve();
     var my = next++;
-    return compressImage(list[my], 620000)
-      .then(function (b64) { out[my] = b64; })
+    var f = list[my];
+    var job;
+    if (isGif(f) && f.size <= GIF_MAX_BYTES) {
+      job = readRaw(f).then(function (d) { out[my] = d; isAnim[my] = true; gifKept++; });
+    } else {
+      /* 너무 큰 GIF는 움직임을 담을 수 없어 첫 장면만 사진으로 */
+      if (isGif(f)) gifFlat++;
+      job = compressImage(f, 620000).then(function (b64) { out[my] = b64; });
+    }
+    return job
       .catch(function () { out[my] = null; })
       .then(function () { tick(); return lane(); });
   }
@@ -1706,9 +1728,11 @@ function handleFiles(files) {
   for (var i = 0; i < Math.min(LANES, total); i++) lanes.push(lane());
   Promise.all(lanes).then(function () {
     var okCnt = 0;
-    for (var k = 0; k < total; k++) if (out[k]) { draftPhotos.push({ d: out[k], id: null }); okCnt++; }
+    for (var k = 0; k < total; k++) if (out[k]) { draftPhotos.push({ d: out[k], id: null, gif: !!isAnim[k] }); okCnt++; }
     renderPhotoGrid(); $("photoDrop").textContent = dropLabel();
     if (okCnt < total) toast("일부 사진을 불러오지 못했어요.");
+    if (gifKept) toast("움직이는 GIF " + gifKept + "개를 그대로 담았어요");
+    if (gifFlat) toast("용량이 큰 GIF " + gifFlat + "개는 첫 장면만 담겼어요 (720KB까지 가능)");
     if (draftPhotos.length > 40) toast("사진이 아주 많으면 저장·불러오기가 조금 느려질 수 있어요.");
   });
 }
@@ -1748,10 +1772,11 @@ function movePhotoGroup(idxList, toIdx) {
   draftPhotos = rest;
   var ci = draftPhotos.indexOf(coverRef);
   draftCoverIdx = ci < 0 ? 0 : ci;
+  /* 옮기고 나면 선택을 풀어서 바로 다음 사진을 고를 수 있게 */
   draftSel = [];
-  for (var j = 0; j < group.length; j++) draftSel.push(pos + j);
-  lastPickIdx = pos;
+  lastPickIdx = -1;
   renderPhotoGrid();
+  toast(group.length + "장을 옮겼어요");
 }
 function renderPhotoGrid() {
   var g = $("photoGrid"); g.innerHTML = "";
@@ -1762,6 +1787,7 @@ function renderPhotoGrid() {
     var d = document.createElement("div"); d.className = "photo-thumb" + (isPicked(idx) ? " picked" : ""); d.dataset.idx = idx;
     var im = document.createElement("img"); im.alt = ""; im.draggable = false;
     if (b64) im.src = b64; else im.className = "ph-load";
+    if (b64 && isGifData(b64)) { var gm = document.createElement("span"); gm.className = "gifmark"; gm.textContent = "GIF"; d.appendChild(gm); }
     var rm = document.createElement("button"); rm.className = "remove"; rm.type = "button"; rm.textContent = "×"; rm.setAttribute("aria-label", "사진 빼기");
     rm.onclick = function () {
       draftPhotos.splice(idx, 1);
