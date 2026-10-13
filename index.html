@@ -105,6 +105,11 @@
   .btn-gold:active { transform: translateY(0); }
   .btn-gold:disabled { opacity: .6; cursor: default; transform: none; }
 
+  .who-row { display:flex; gap:10px; justify-content:center; margin-bottom:22px; }
+  .who-row button { flex:1; max-width:140px; padding:12px 10px; border-radius:14px; border:1px solid rgba(255,255,255,.3);
+    background:rgba(255,255,255,.08); color:var(--cream); font-family:var(--sans); font-size:15px; cursor:pointer; transition:all .15s; }
+  .who-row button:hover { background:rgba(255,255,255,.16); }
+  .who-row button.sel { background:var(--gold); border-color:var(--gold); color:#fff; font-weight:700; box-shadow:0 4px 14px rgba(232,138,180,.4); }
   .gate .hint { font-size: 12px; color: var(--cream-dim); margin-top: 18px; line-height: 1.6; }
   .gate .err { color: var(--rose); font-size: 13px; min-height: 18px; margin-top: 10px; }
   .heart { color: var(--rose); font-style: normal; }
@@ -783,6 +788,8 @@
       </svg>
     </div>
     <h1 id="lockTitle">다시 만났네요</h1>
+    <p class="sub">누구신가요?</p>
+    <div class="who-row" id="whoRow"></div>
     <p class="sub">둘만 아는 암호를 입력해주세요</p>
     <div class="pin-row" id="lockPins">
       <input type="text" readonly maxlength="1" /><input type="text" readonly maxlength="1" />
@@ -950,7 +957,7 @@
 
 <div class="overlay" id="addOverlay"><button class="float-x" id="addFloatX" type="button" aria-label="작성 화면 닫기"><span class="lbl">닫기</span>×</button>
   <div class="modal" role="dialog" aria-modal="true">
-    <div class="modal-head"><h2 id="addTitle">오늘의 추억</h2><span class="draft-tag" id="draftTag"></span><span class="ver-tag" id="verTag">v97</span><button class="x" id="addClose" aria-label="닫기">×</button></div>
+    <div class="modal-head"><h2 id="addTitle">오늘의 추억</h2><span class="draft-tag" id="draftTag"></span><span class="ver-tag" id="verTag">v98</span><button class="x" id="addClose" aria-label="닫기">×</button></div>
     <div class="modal-body">
       <div class="field">
         <div class="photo-drop" id="photoDrop">📷 사진 더하기 (여러 장 가능, 선택)</div>
@@ -1214,6 +1221,7 @@ async function boot() {
   function goLock(s) {
     settings = s;
     show("lock");
+    buildWhoRow();
     setTimeout(function () { var el = $("lockPins").querySelector("input"); if (el) el.focus(); }, 300);
   }
   try {
@@ -1258,16 +1266,59 @@ async function doSetup() {
     $("setupBtn").disabled = false;
   }
 }
+/* ===== 누가 들어왔는지 + 기기와 상관없는 '지난 방문 시각' ===== */
+var me = null, notifBase = 0;
+var VISIT_DOC = ["settings", "visits"];
+function meKey() { return (me && settings && me === settings.name2) ? "u2" : "u1"; }
+function buildWhoRow() {
+  var box = $("whoRow"); if (!box || !settings) return;
+  box.innerHTML = "";
+  var saved = null;
+  try { saved = localStorage.getItem("me_name"); } catch (e) {}
+  [settings.name1, settings.name2].filter(Boolean).forEach(function (n) {
+    var b = document.createElement("button"); b.type = "button"; b.textContent = n;
+    if (n === saved) { b.classList.add("sel"); me = n; }
+    b.onclick = function () {
+      var all = box.querySelectorAll("button");
+      for (var i = 0; i < all.length; i++) all[i].classList.remove("sel");
+      b.classList.add("sel"); me = n;
+      try { localStorage.setItem("me_name", n); } catch (e) {}
+      $("lockErr").textContent = "";
+    };
+    box.appendChild(b);
+  });
+}
+async function startVisit() {
+  var ref = doc(db, VISIT_DOC[0], VISIT_DOC[1]);
+  var k = meKey(), prev = 0;
+  try {
+    var snap = await getDoc(ref);
+    var d = (snap.exists() ? snap.data() : null) || {};
+    prev = d[k] || 0;
+  } catch (e) { prev = 0; }
+  /* 처음 들어오는 사람은 지금을 기준으로 — 지난 기록이 통째로 새 소식이 되지 않게 */
+  notifBase = prev || Date.now();
+  var f = {}; f[k] = Date.now();
+  try { await setDoc(ref, f, { merge: true }); } catch (e) {}
+}
+async function markAllSeenNow() {
+  notifBase = Date.now();
+  var f = {}; f[meKey()] = notifBase;
+  try { await setDoc(doc(db, VISIT_DOC[0], VISIT_DOC[1]), f, { merge: true }); } catch (e) {}
+}
 function doUnlock() {
   var pin = readPins($("lockPins")), err = $("lockErr");
+  if (!me) { err.textContent = "현선 또는 서우를 눌러주세요."; return; }
   if (pin.length !== 4) { err.textContent = "암호 4자리를 입력해주세요."; return; }
   if (pin !== settings.pin) { err.textContent = "암호가 맞지 않아요."; clearPins($("lockPins")); return; }
-  err.textContent = ""; enterMain();
+  err.textContent = "";
+  startVisit().then(enterMain, enterMain);
 }
 
 /* ---------- main ---------- */
 function enterMain() {
-  if (!localStorage.getItem("notif_seen")) setNotifSeen(Date.now());
+  if (me) { draftAuthor = me; commentAuthor = me; }
+  subscribeBucket();           /* 버킷 변화도 새 소식에 들어가므로 미리 구독 */
   $("ddayNum").innerHTML = daysTogether().toLocaleString() + ' <small>일째</small>';
   $("milestoneEl").textContent = nextMilestone();
   buildAuthorPicker();
@@ -1279,7 +1330,7 @@ function buildAuthorPicker() {
   var p = $("authorPicker"); p.innerHTML = "";
   [settings.name1, settings.name2].forEach(function (name) {
     var b = document.createElement("div");
-    b.className = "author-pick"; b.textContent = name;
+    b.className = "author-pick" + (name === draftAuthor ? " sel" : ""); b.textContent = name;
     b.onclick = function () { var all = p.querySelectorAll(".author-pick"); for (var i = 0; i < all.length; i++) all[i].classList.remove("sel"); b.classList.add("sel"); draftAuthor = name; scheduleDraftSave(); };
     p.appendChild(b);
   });
@@ -2331,7 +2382,7 @@ function subscribeBucket() {
     bucketItems = [];
     snap.forEach(function (d) { var x = d.data(); x.id = d.id; bucketItems.push(x); });
     bucketItems.sort(function (a, b) { return orderOf(a) - orderOf(b); });
-    renderBucket();
+    renderBucket(); updateNotifBadge();
   }, function () {});
 }
 function renderBucket() {
@@ -2497,7 +2548,7 @@ async function addBucket() {
   var t = ($("bucketInput").value || "").trim();
   if (!t) return;
   $("bucketInput").value = "";
-  try { await addDoc(collection(db, BUCKET_COL), { text: t, done: false, cat: ((bucketFilter === "all" || bucketFilter === "done") ? "etc" : bucketFilter), order: Date.now(), createdAt: Date.now() }); }
+  try { await addDoc(collection(db, BUCKET_COL), { text: t, done: false, cat: ((bucketFilter === "all" || bucketFilter === "done") ? "etc" : bucketFilter), order: Date.now(), createdAt: Date.now(), by: me || null }); }
   catch (e) { toast("추가하지 못했어요."); }
 }
 var openBucketNote = null;
@@ -2598,7 +2649,7 @@ async function removeBucketPhoto(it, pid) {
 async function toggleBucket(it) {
   var nowDone = !it.done;
   var f = { done: nowDone };
-  if (nowDone) f.doneAt = Date.now();
+  if (nowDone) { f.doneAt = Date.now(); f.doneBy = me || null; }
   try {
     await updateDoc(doc(db, BUCKET_COL, it.id), f);
     if (nowDone && bucketFilter !== "done") toast("📦 추억보관함에 담았어요");
@@ -2763,14 +2814,28 @@ function saveReadSet(s) { try { localStorage.setItem("notif_read", JSON.stringif
 function addRead(id) { var s = getReadSet(); s.add(id); saveReadSet(s); }
 function clearRead() { try { localStorage.removeItem("notif_read"); } catch (e) {} }
 function collectNewItems() {
-  var seen = getNotifSeen(), read = getReadSet(), arr = [];
+  var base = notifBase || getNotifSeen(), read = getReadSet(), arr = [];
+  function mine(who) { return !!me && who === me; }
   memories.forEach(function (m) {
     var pid = "post:" + m.id;
-    if ((m.createdAt || 0) > seen && !read.has(pid)) arr.push({ kind: "post", id: pid, time: m.createdAt || 0, m: m });
+    if ((m.createdAt || 0) > base && !mine(m.author) && !read.has(pid)) arr.push({ kind: "post", id: pid, time: m.createdAt || 0, m: m });
     (m.comments || []).forEach(function (c) {
       var cid = "cmt:" + m.id + ":" + cidOf(c);
-      if ((c.at || 0) > seen && !read.has(cid)) arr.push({ kind: "comment", id: cid, time: c.at || 0, m: m, c: c });
+      if ((c.at || 0) > base && !mine(c.author) && !read.has(cid)) arr.push({ kind: "comment", id: cid, time: c.at || 0, m: m, c: c });
+      /* 내가 쓴 댓글에 상대가 눌러준 하트 */
+      if (mine(c.author)) {
+        (Array.isArray(c.likes) ? c.likes : []).forEach(function (l) {
+          var lid = "like:" + m.id + ":" + cidOf(c) + ":" + l.a;
+          if ((l.at || 0) > base && !mine(l.a) && !read.has(lid)) arr.push({ kind: "like", id: lid, time: l.at || 0, m: m, c: c, who: l.a });
+        });
+      }
     });
+  });
+  bucketItems.forEach(function (b) {
+    var nid = "bk:" + b.id;
+    if ((b.createdAt || 0) > base && b.by && !mine(b.by) && !read.has(nid)) arr.push({ kind: "bucket", id: nid, time: b.createdAt || 0, b: b });
+    var did = "bkdone:" + b.id;
+    if (b.done && (b.doneAt || 0) > base && b.doneBy && !mine(b.doneBy) && !read.has(did)) arr.push({ kind: "bucketDone", id: did, time: b.doneAt || 0, b: b });
   });
   arr.sort(function (a, b) { return b.time - a.time; });
   return arr;
@@ -2787,22 +2852,40 @@ function renderNotif() {
   if (!items.length) { box.innerHTML = '<div class="notif-empty">새로운 소식이 없어요 ✨</div>'; return; }
   items.forEach(function (it) {
     var el = document.createElement("button"); el.type = "button"; el.className = "notif-item";
-    var ico = it.kind === "post" ? "📝" : "💬", title, desc;
+    var ico = "💬", title = "", desc = "";
     if (it.kind === "post") {
+      ico = "📝";
       title = (it.m.author ? esc(it.m.author) + "님의 " : "") + "새 추억";
       desc = stripTags(it.m.title) || stripTags(it.m.content) || "(제목 없음)";
-    } else {
+    } else if (it.kind === "comment") {
+      ico = "💬";
       title = (it.c.author ? esc(it.c.author) + "님의 " : "") + "새 댓글";
       desc = (it.c.text || "") + "  —  " + (stripTags(it.m.title) || "추억");
+    } else if (it.kind === "like") {
+      ico = "💗";
+      title = esc(it.who || "") + "님이 하트를 눌렀어요";
+      desc = (it.c.text || "") + "  —  " + (stripTags(it.m.title) || "추억");
+    } else if (it.kind === "bucket") {
+      ico = "✨";
+      title = esc(it.b.by || "") + "님의 새 버킷리스트";
+      desc = it.b.text || "";
+    } else if (it.kind === "bucketDone") {
+      ico = "📦";
+      title = esc(it.b.doneBy || "") + "님이 하나 이뤘어요";
+      desc = it.b.text || "";
     }
     el.innerHTML = '<span class="notif-ico">' + ico + '</span><div class="notif-main"><div class="notif-t">' + title + '</div><div class="notif-d">' + esc(desc) + '</div><div class="notif-when">' + esc(fmtCommentTime(it.time)) + '</div></div>';
-    el.onclick = function () { addRead(it.id); closeNotif(); openDetail(it.m); };
+    el.onclick = function () {
+      addRead(it.id); closeNotif();
+      if (it.kind === "bucket" || it.kind === "bucketDone") { openBucket(); }
+      else { openDetail(it.m); }
+    };
     box.appendChild(el);
   });
 }
 function openNotif() { renderNotif(); $("notifOverlay").classList.add("active"); document.body.style.overflow = "hidden"; }
 function closeNotif() { $("notifOverlay").classList.remove("active"); document.body.style.overflow = ""; updateNotifBadge(); }
-function markAllRead() { setNotifSeen(Date.now()); clearRead(); renderNotif(); updateNotifBadge(); }
+function markAllRead() { clearRead(); markAllSeenNow().then(function () { renderNotif(); updateNotifBadge(); }); }
 async function toggleFav(m) {
   try { await updateDoc(doc(db, MEM_COL, m.id), { fav: !m.fav }); }
   catch (e) { toast("변경하지 못했어요."); }
