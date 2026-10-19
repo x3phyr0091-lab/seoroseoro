@@ -564,6 +564,29 @@
   .bk-photos .cell img { width:100%; height:100%; object-fit:cover; display:block; cursor:zoom-in; }
   .bk-photos .cell .rm { position:absolute; top:2px; right:2px; width:19px; height:19px; border-radius:50%; background:rgba(0,0,0,.55); border:none; color:#fff; font-size:12px; line-height:1; cursor:pointer; padding:0; }
   .bk-photos .cell.ph-load { animation:phShimmer 1.1s linear infinite; background:linear-gradient(100deg, rgba(60,40,55,.06) 30%, rgba(60,40,55,.13) 50%, rgba(60,40,55,.06) 70%); background-size:220% 100%; }
+  .bk-cmt { margin-top:12px; padding-top:11px; border-top:1px dashed var(--card-edge); }
+  .bk-cmt-title { font-family:var(--sans); font-size:11.5px; font-weight:700; color:var(--gold); margin-bottom:8px; letter-spacing:.02em; }
+  .bk-cmt-item { display:flex; gap:8px; align-items:flex-start; padding:7px 0; border-bottom:1px dashed rgba(220,200,225,.5); }
+  .bk-cmt-item:last-of-type { border-bottom:none; }
+  .bk-cmt-av { flex-shrink:0; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:var(--sans); font-size:11px; font-weight:800; color:#fff; }
+  .bk-cmt-av.u1 { background:var(--gold); }
+  .bk-cmt-av.u2 { background:var(--blue); }
+  .bk-cmt-body { flex:1; min-width:0; }
+  .bk-cmt-head { display:flex; align-items:center; gap:7px; }
+  .bk-cmt-who { font-family:var(--sans); font-size:12px; font-weight:700; color:var(--ink); }
+  .bk-cmt-when { font-size:10.5px; color:var(--text-dim); margin-right:auto; }
+  .bk-cmt-del { background:none; border:none; color:var(--text-dim); font-size:10.5px; cursor:pointer; padding:2px 4px; opacity:.6; }
+  .bk-cmt-del:hover { opacity:1; color:#c0392b; }
+  .bk-cmt-text { font-size:13.5px; line-height:1.55; color:var(--text); white-space:pre-wrap; word-break:break-word; margin-top:1px; }
+  .bk-cmt-empty { font-size:12.5px; color:var(--text-dim); padding:2px 0 8px; }
+  .bk-cmt-row { display:flex; gap:6px; align-items:flex-end; margin-top:9px; }
+  .bk-cmt-row textarea { flex:1; resize:none; min-height:34px; max-height:110px; padding:8px 10px; border:1px solid var(--card-edge); border-radius:10px; background:#fff; color:var(--text); font-family:var(--serif); font-size:13.5px; line-height:1.5; outline:none; }
+  .bk-cmt-row textarea:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(232,138,180,.16); }
+  .bk-cmt-row button { flex-shrink:0; padding:0 13px; height:34px; border:none; border-radius:10px; background:var(--gold); color:#fff; font-family:var(--sans); font-weight:700; font-size:12.5px; cursor:pointer; }
+  .bk-cmt-row button:disabled { opacity:.5; cursor:default; }
+  .bk-cmt-btn { background:none; border:none; cursor:pointer; color:var(--text-dim); font-size:12px; padding:2px 5px; flex-shrink:0; display:inline-flex; align-items:center; gap:3px; border-radius:10px; opacity:.6; font-family:var(--sans); }
+  .bk-cmt-btn:hover { opacity:1; background:rgba(111,159,224,.14); }
+  .bk-cmt-btn.has { opacity:1; color:var(--blue); font-weight:700; }
   .bk-note-hint { font-family:var(--sans); font-size:11.5px; color:var(--text-dim); margin-top:8px; }
   .bucket-list { display:flex; flex-direction:column; gap:8px; }
   .bucket-item { display:flex; align-items:center; gap:12px; padding:13px 15px; background:rgba(255,255,255,.55); border:1px solid var(--card-edge); border-radius:14px; }
@@ -957,7 +980,7 @@
 
 <div class="overlay" id="addOverlay"><button class="float-x" id="addFloatX" type="button" aria-label="작성 화면 닫기"><span class="lbl">닫기</span>×</button>
   <div class="modal" role="dialog" aria-modal="true">
-    <div class="modal-head"><h2 id="addTitle">오늘의 추억</h2><span class="draft-tag" id="draftTag"></span><span class="ver-tag" id="verTag">v98</span><button class="x" id="addClose" aria-label="닫기">×</button></div>
+    <div class="modal-head"><h2 id="addTitle">오늘의 추억</h2><span class="draft-tag" id="draftTag"></span><span class="ver-tag" id="verTag">v99</span><button class="x" id="addClose" aria-label="닫기">×</button></div>
     <div class="modal-body">
       <div class="field">
         <div class="photo-drop" id="photoDrop">📷 사진 더하기 (여러 장 가능, 선택)</div>
@@ -1107,13 +1130,19 @@ var draftOrigCover = null, draftOrigCoverId = null, gridRenderPending = false;
 var editingParaCid = null;
 
 const MOODS = [
-  { e: "❤️", t: "사랑" }, { e: "😊", t: "행복" }, { e: "😂", t: "웃음" }, { e: "🤗", t: "포근" },
-  { e: "🍷", t: "특별" }, { e: "🙏", t: "고마움" }, { e: "😮", t: "신기" },
-  { e: "😌", t: "편안" }, { e: "🌿", t: "상쾌" }, { e: "🤩", t: "신남" }, { e: "🙌", t: "뿌듯" },
-  { e: "😴", t: "나른" }, { e: "😵", t: "피곤" }, { e: "😳", t: "민망" },
-  { e: "😢", t: "속상" }, { e: "😤", t: "서운" }, { e: "🙇", t: "미안" }, { e: "😟", t: "걱정" }
+  /* 좋은 마음 */
+  { e: "❤️", t: "사랑" }, { e: "💗", t: "설렘" }, { e: "😊", t: "행복" }, { e: "😂", t: "웃음" },
+  { e: "🤗", t: "포근" }, { e: "🥹", t: "뭉클" }, { e: "🍷", t: "특별" }, { e: "🙏", t: "고마움" },
+  { e: "😮", t: "신기" }, { e: "😌", t: "편안" }, { e: "🌿", t: "상쾌" }, { e: "🤩", t: "신남" },
+  { e: "🙌", t: "뿌듯" }, { e: "🫶", t: "든든" },
+  /* 지치거나 머쓱한 마음 */
+  { e: "😴", t: "나른" }, { e: "😵", t: "피곤" }, { e: "😳", t: "민망" }, { e: "😟", t: "걱정" },
+  /* 서로 솔직해지는 마음 */
+  { e: "😠", t: "화남" }, { e: "😤", t: "서운" }, { e: "😶", t: "삐짐" }, { e: "💢", t: "다툼" },
+  { e: "😢", t: "속상" }, { e: "😔", t: "우울" }, { e: "🥺", t: "그리움" }, { e: "😫", t: "답답" },
+  { e: "🙇", t: "미안" }, { e: "🤝", t: "화해" }
 ];
-const MOOD_ALIAS = { "설렘": "사랑", "두근": "사랑", "뭉클": "사랑", "평온": "포근", "그리움": "포근", "화남": "서운", "삐짐": "서운", "다툼": "서운", "우울": "속상", "지침": "피곤", "긴장": "걱정" };
+const MOOD_ALIAS = { "두근": "설렘", "평온": "포근", "지침": "피곤", "긴장": "걱정" };
 
 /* ---------- helpers ---------- */
 const $ = function (id) { return document.getElementById(id); };
@@ -2456,6 +2485,12 @@ function buildBucketRow(it, isArc) {
   nb.textContent = hasNote ? ("📝" + (nCnt ? " " + nCnt : "")) : "📝";
   nb.title = "메모·사진";
   nb.onclick = function () { openBucketNote = (openBucketNote === it.id) ? null : it.id; renderBucket(); };
+  var cCnt = bkCommentsOf(it).length;
+  var cb = document.createElement("button"); cb.type = "button";
+  cb.className = "bk-cmt-btn" + (cCnt ? " has" : "");
+  cb.textContent = cCnt ? ("💬 " + cCnt) : "💬";
+  cb.title = "주고받은 이야기";
+  cb.onclick = function () { openBucketNote = (openBucketNote === it.id) ? null : it.id; renderBucket(); };
   var ed = document.createElement("button"); ed.type = "button"; ed.className = "bk-edit"; ed.textContent = "✎";
   ed.onclick = function () { editingBucketId = it.id; renderBucket(); };
   row.dataset.bid = it.id;
@@ -2469,11 +2504,11 @@ function buildBucketRow(it, isArc) {
     dt.textContent = fmtDoneAt(it.doneAt);
     if (dt.textContent) row.appendChild(dt);
   }
-  row.appendChild(nb); row.appendChild(ed);
+  row.appendChild(nb); row.appendChild(cb); row.appendChild(ed);
   if (!isArc) {
     var hd = document.createElement("div"); hd.className = "bk-handle"; hd.textContent = "⠿";
     row.addEventListener("pointerdown", function (e) {
-      if (e.target.closest(".bucket-del") || e.target.closest(".bucket-check") || e.target.closest(".bk-edit") || e.target.closest(".bk-note-btn")) return;
+      if (e.target.closest(".bucket-del") || e.target.closest(".bucket-check") || e.target.closest(".bk-edit") || e.target.closest(".bk-note-btn") || e.target.closest(".bk-cmt-btn")) return;
       if (e.pointerType === "mouse") { startBucketDrag(e, row, it); }
       else if (e.target.closest(".bk-handle")) { startBucketDrag(e, row, it); }
     });
@@ -2607,8 +2642,80 @@ function buildBucketNote(it) {
   hint.textContent = "사진은 " + BK_MAX_PHOTOS + "장까지 넣을 수 있어요.";
   wrap.appendChild(hint);
 
+  wrap.appendChild(buildBucketComments(it));
+
   setTimeout(function () { autoGrow(ta); }, 0);
   return wrap;
+}
+/* ===== 버킷 항목 댓글 — 누가 썼는지 색으로 구분 ===== */
+function bkCommentsOf(it) { return Array.isArray(it && it.comments) ? it.comments : []; }
+function whoClass(name) { return (settings && name === settings.name2) ? "u2" : "u1"; }
+function buildBucketComments(it) {
+  var box = document.createElement("div"); box.className = "bk-cmt";
+  var list = bkCommentsOf(it).slice().sort(function (a, b) { return (a.at || 0) - (b.at || 0); });
+
+  var ti = document.createElement("div"); ti.className = "bk-cmt-title";
+  ti.textContent = "💬 주고받은 이야기" + (list.length ? " " + list.length : "");
+  box.appendChild(ti);
+
+  if (!list.length) {
+    var em = document.createElement("div"); em.className = "bk-cmt-empty";
+    em.textContent = "아직 남긴 이야기가 없어요.";
+    box.appendChild(em);
+  }
+  list.forEach(function (c) {
+    var row = document.createElement("div"); row.className = "bk-cmt-item";
+    var av = document.createElement("div"); av.className = "bk-cmt-av " + whoClass(c.author);
+    av.textContent = (c.author || "?").slice(0, 1);
+    var bd = document.createElement("div"); bd.className = "bk-cmt-body";
+    var hd = document.createElement("div"); hd.className = "bk-cmt-head";
+    var wn = document.createElement("span"); wn.className = "bk-cmt-who"; wn.textContent = c.author || "";
+    var wh = document.createElement("span"); wh.className = "bk-cmt-when"; wh.textContent = fmtCommentTime(c.at);
+    var dl = document.createElement("button"); dl.type = "button"; dl.className = "bk-cmt-del"; dl.textContent = "삭제";
+    dl.onclick = function () { delBucketComment(it, c.cid); };
+    hd.appendChild(wn); hd.appendChild(wh); hd.appendChild(dl);
+    var tx = document.createElement("div"); tx.className = "bk-cmt-text"; tx.textContent = c.text || "";
+    bd.appendChild(hd); bd.appendChild(tx);
+    row.appendChild(av); row.appendChild(bd);
+    box.appendChild(row);
+  });
+
+  var row2 = document.createElement("div"); row2.className = "bk-cmt-row";
+  var ta2 = document.createElement("textarea"); ta2.rows = 1;
+  ta2.placeholder = (me ? me + "(으)로 " : "") + "한마디 남기기";
+  ta2.maxLength = 300;
+  ta2.addEventListener("input", function () { autoGrow(ta2); });
+  var sd = document.createElement("button"); sd.type = "button"; sd.textContent = "등록";
+  function send() {
+    var t = (ta2.value || "").trim();
+    if (!t) return;
+    sd.disabled = true;
+    addBucketComment(it, t).then(function () { ta2.value = ""; autoGrow(ta2); })
+      .catch(function () {}).then(function () { sd.disabled = false; });
+  }
+  sd.onclick = send;
+  ta2.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(); }
+  });
+  row2.appendChild(ta2); row2.appendChild(sd);
+  box.appendChild(row2);
+  return box;
+}
+async function addBucketComment(it, text) {
+  var c = {
+    cid: "b" + Date.now() + Math.random().toString(36).slice(2, 6),
+    at: Date.now(),
+    author: me || (settings && settings.name1) || "나",
+    text: text
+  };
+  try { await updateDoc(doc(db, BUCKET_COL, it.id), { comments: bkCommentsOf(it).concat([c]) }); }
+  catch (e) { toast("남기지 못했어요."); throw e; }
+}
+async function delBucketComment(it, cid) {
+  if (!confirm("이 이야기를 지울까요?")) return;
+  var remain = bkCommentsOf(it).filter(function (x) { return x.cid !== cid; });
+  try { await updateDoc(doc(db, BUCKET_COL, it.id), { comments: remain }); }
+  catch (e) { toast("지우지 못했어요."); }
 }
 async function saveBucketNote(it, note) {
   try { await updateDoc(doc(db, BUCKET_COL, it.id), { note: (note || "").trim() }); }
@@ -2836,6 +2943,10 @@ function collectNewItems() {
     if ((b.createdAt || 0) > base && b.by && !mine(b.by) && !read.has(nid)) arr.push({ kind: "bucket", id: nid, time: b.createdAt || 0, b: b });
     var did = "bkdone:" + b.id;
     if (b.done && (b.doneAt || 0) > base && b.doneBy && !mine(b.doneBy) && !read.has(did)) arr.push({ kind: "bucketDone", id: did, time: b.doneAt || 0, b: b });
+    (Array.isArray(b.comments) ? b.comments : []).forEach(function (c) {
+      var bc = "bkcmt:" + b.id + ":" + c.cid;
+      if ((c.at || 0) > base && !mine(c.author) && !read.has(bc)) arr.push({ kind: "bucketComment", id: bc, time: c.at || 0, b: b, c: c });
+    });
   });
   arr.sort(function (a, b) { return b.time - a.time; });
   return arr;
@@ -2873,11 +2984,15 @@ function renderNotif() {
       ico = "📦";
       title = esc(it.b.doneBy || "") + "님이 하나 이뤘어요";
       desc = it.b.text || "";
+    } else if (it.kind === "bucketComment") {
+      ico = "💬";
+      title = esc(it.c.author || "") + "님이 버킷에 남긴 말";
+      desc = (it.c.text || "") + "  —  " + (it.b.text || "");
     }
     el.innerHTML = '<span class="notif-ico">' + ico + '</span><div class="notif-main"><div class="notif-t">' + title + '</div><div class="notif-d">' + esc(desc) + '</div><div class="notif-when">' + esc(fmtCommentTime(it.time)) + '</div></div>';
     el.onclick = function () {
       addRead(it.id); closeNotif();
-      if (it.kind === "bucket" || it.kind === "bucketDone") { openBucket(); }
+      if (it.kind === "bucket" || it.kind === "bucketDone" || it.kind === "bucketComment") { openBucket(); if (it.b) { openBucketNote = it.b.id; renderBucket(); } }
       else { openDetail(it.m); }
     };
     box.appendChild(el);
