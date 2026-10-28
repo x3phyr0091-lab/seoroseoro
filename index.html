@@ -758,6 +758,77 @@
   .modal-lg .detail-content { font-size: 17.5px; line-height: 1.95; }
   .modal-lg .detail-meta { font-size: 14px; }
   .modal-lg .detail-gallery img { height: 360px; }
+  /* ===== 감상 기록 (영화·드라마·책·공연) ===== */
+  .rv-sub { font-size:13.5px; color:var(--text-dim); margin-bottom:14px; line-height:1.5; }
+  .rv-top { display:flex; gap:8px; margin-bottom:16px; }
+  .rv-top button { flex:1; padding:11px 14px; border:none; border-radius:12px; background:var(--gold); color:#fff; font-family:var(--sans); font-weight:700; font-size:14px; cursor:pointer; }
+  .rv-top button:hover { filter:brightness(1.06); }
+  .rv-filter { display:flex; flex-wrap:wrap; gap:7px; margin:0 0 16px; padding-top:12px; border-top:1px dashed var(--card-edge); }
+  .rv-filter button { border:1px solid var(--card-edge); background:rgba(255,255,255,.6); border-radius:999px; padding:6px 12px; font-size:12.5px; font-family:var(--sans); font-weight:700; color:var(--text-dim); cursor:pointer; }
+  .rv-filter button.sel { background:rgba(232,138,180,.18); border-color:var(--gold); color:#9a5346; }
+  .rv-list { display:flex; flex-direction:column; gap:12px; }
+  .rv-empty { text-align:center; color:var(--text-dim); font-size:14px; padding:34px 0; line-height:1.7; }
+  .rv-row { background:rgba(255,255,255,.62); border:1px solid var(--card-edge); border-radius:16px; overflow:hidden; }
+  .rv-card { display:flex; gap:13px; padding:13px; cursor:pointer; align-items:flex-start; }
+  .rv-card:hover { background:rgba(232,138,180,.06); }
+  .rv-poster { flex-shrink:0; width:62px; height:90px; border-radius:9px; object-fit:cover; background:rgba(120,90,140,.1); display:block; }
+  .rv-poster.none { display:flex; align-items:center; justify-content:center; font-size:22px; }
+  .rv-info { flex:1; min-width:0; }
+  .rv-kind { display:inline-block; font-family:var(--sans); font-size:10.5px; font-weight:700; color:var(--text-dim); background:rgba(255,255,255,.8); border:1px solid var(--card-edge); border-radius:999px; padding:2px 8px; margin-bottom:5px; }
+  .rv-title { font-family:var(--serif); font-size:17px; font-weight:700; color:var(--ink); line-height:1.35; word-break:break-word; }
+  .rv-meta { font-family:var(--sans); font-size:12px; color:var(--text-dim); margin-top:3px; line-height:1.5; }
+  .rv-scores { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; align-items:center; }
+  .rv-sc { display:inline-flex; align-items:center; gap:4px; font-family:var(--sans); font-size:12px; font-weight:700; border-radius:999px; padding:3px 9px; color:#fff; }
+  .rv-sc.u1 { background:var(--gold); }
+  .rv-sc.u2 { background:var(--blue); }
+  .rv-sc.none { background:rgba(255,255,255,.85); border:1px dashed var(--card-edge); color:var(--text-dim); font-weight:400; }
+  .rv-avg { font-family:var(--sans); font-size:11.5px; color:var(--text-dim); margin-left:2px; }
+  .rv-cmtn { font-family:var(--sans); font-size:11.5px; color:var(--blue); margin-left:auto; flex-shrink:0; }
+  .rv-body { display:none; padding:0 14px 14px; border-top:1px dashed var(--card-edge); }
+  .rv-body.on { display:block; }
+  .rv-big { width:100%; max-height:420px; object-fit:contain; border-radius:12px; margin:13px 0 4px; background:rgba(120,90,140,.06); display:block; cursor:zoom-in; }
+  .rv-notes { margin-top:13px; }
+  .rv-notes ul { list-style:none; display:flex; flex-direction:column; gap:8px; }
+  .rv-notes li { font-size:15px; line-height:1.72; color:var(--text); padding-left:16px; position:relative; word-break:break-word; }
+  .rv-notes li::before { content:""; position:absolute; left:0; top:10px; width:5px; height:5px; border-radius:50%; background:var(--gold-soft); }
+  .rv-notes .rv-by { font-family:var(--sans); font-size:11.5px; color:var(--text-dim); margin-top:10px; }
+  .rv-none { font-size:13.5px; color:var(--text-dim); padding:4px 0; }
+  .rv-acts { display:flex; gap:7px; margin-top:14px; }
+  .rv-acts button { border:1px solid var(--card-edge); background:rgba(255,255,255,.75); color:var(--text-dim); border-radius:10px; padding:6px 13px; font-family:var(--sans); font-size:12.5px; cursor:pointer; }
+  .rv-acts button:hover { background:#fff; color:var(--ink); }
+  .rv-acts .del:hover { color:#c0392b; border-color:#e8a6a6; }
+  .rv-acts .grow { flex:1; }
+  /* 작성 폼 */
+  .rv-f { display:flex; flex-direction:column; gap:13px; }
+  .rv-f label { display:block; font-family:var(--sans); font-size:12.5px; font-weight:700; color:var(--ink); margin-bottom:6px; }
+  .rv-f input[type="text"], .rv-f input[type="date"], .rv-f textarea {
+    width:100%; padding:11px 13px; border:1px solid var(--card-edge); border-radius:12px; background:rgba(255,255,255,.8);
+    color:var(--text); font-family:var(--serif); font-size:14.5px; line-height:1.6; outline:none; }
+  .rv-f input:focus, .rv-f textarea:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(232,138,180,.18); }
+  .rv-f textarea { resize:none; min-height:150px; }
+  .rv-f .hint { font-family:var(--sans); font-size:11.5px; color:var(--text-dim); margin-top:6px; line-height:1.55; }
+  .rv-kinds { display:flex; flex-wrap:wrap; gap:7px; }
+  .rv-kinds button { border:1px solid var(--card-edge); background:rgba(255,255,255,.6); border-radius:999px; padding:7px 14px; font-size:13px; font-family:var(--sans); font-weight:700; color:var(--text-dim); cursor:pointer; }
+  .rv-kinds button.sel { background:rgba(232,138,180,.18); border-color:var(--gold); color:#9a5346; }
+  .rv-scorebox { display:flex; gap:10px; }
+  .rv-scorebox .one { flex:1; }
+  .rv-scorebox .one .who { display:flex; align-items:center; gap:6px; font-family:var(--sans); font-size:12.5px; font-weight:700; margin-bottom:6px; }
+  .rv-scorebox .one .dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+  .rv-scorebox .one.u1 .dot { background:var(--gold); }
+  .rv-scorebox .one.u2 .dot { background:var(--blue); }
+  .rv-pf { display:flex; gap:11px; align-items:flex-start; }
+  .rv-pf .pv { flex-shrink:0; width:76px; height:110px; border-radius:10px; background:rgba(120,90,140,.08); border:1px dashed var(--card-edge); display:flex; align-items:center; justify-content:center; font-size:24px; overflow:hidden; }
+  .rv-pf .pv img { width:100%; height:100%; object-fit:cover; display:block; }
+  .rv-pf .side { flex:1; display:flex; flex-direction:column; gap:7px; align-items:flex-start; }
+  .rv-pf .side button { border:1px solid var(--card-edge); background:rgba(255,255,255,.75); color:var(--text-dim); border-radius:10px; padding:7px 13px; font-family:var(--sans); font-size:12.5px; cursor:pointer; }
+  .rv-pf .side button:hover { background:#fff; color:var(--ink); }
+  @media (max-width: 420px) {
+    .rv-big { max-height:300px; }
+    .rv-poster { width:54px; height:78px; }
+    .tabbar .tab .t-lb { font-size:9.5px; }
+    .tabbar { gap:0; padding:5px; }
+    .tabbar .tab { padding:7px 0; }
+  }
   @media (min-width: 700px) {
     .modal-lg .modal-body { padding: 26px 38px 38px; }
     .modal-lg #detailTitle { font-size: 30px; }
@@ -832,6 +903,7 @@
       <button class="tab" id="tabCal" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><span class="t-lb">달력</span></button>
       <button class="tab" id="tabPlan" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="t-lb">일정</span></button>
       <button class="tab" id="tabBucket" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span class="t-lb">버킷</span></button>
+      <button class="tab" id="tabReview" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.2"/><path d="M7 5v14M17 5v14"/><path d="M2.5 9.4h4.5M2.5 14.6h4.5M17 9.4h4.5M17 14.6h4.5"/></svg><span class="t-lb">감상</span></button>
       <button class="tab" id="tabMore" type="button"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg><span class="t-lb">더보기</span></button>
     </nav>
     <header>
@@ -918,6 +990,69 @@
   </div>
 </div>
 
+<div class="overlay" id="reviewOverlay">
+  <div class="modal modal-lg">
+    <div class="modal-head"><h2>우리가 본 것들</h2><button class="x" id="reviewClose" aria-label="닫기">×</button></div>
+    <div class="modal-body">
+      <p class="rv-sub">같이 본 영화, 드라마, 읽은 책, 다녀온 공연을 기록해요. 각자 점수를 매길 수 있어요.</p>
+      <div class="rv-top"><button type="button" id="reviewAddBtn">✍️ 감상 남기기</button></div>
+      <div class="rv-filter" id="reviewFilterRow"></div>
+      <div class="rv-list" id="reviewList"></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="reviewFormOverlay">
+  <div class="modal">
+    <div class="modal-head"><h2 id="rvFormTitle">감상 남기기</h2><button class="x" id="rvFormClose" aria-label="닫기">×</button></div>
+    <div class="modal-body">
+      <div class="rv-f">
+        <div>
+          <label>무엇을 봤나요</label>
+          <div class="rv-kinds" id="rvKinds"></div>
+        </div>
+        <div>
+          <label for="rvTitle">제목</label>
+          <input type="text" id="rvTitle" placeholder="예) 옵세션" maxlength="80" />
+        </div>
+        <div>
+          <label for="rvMeta">한 줄 정보 (선택)</label>
+          <input type="text" id="rvMeta" placeholder="예) 공포 · 2026 · 커리 바커" maxlength="80" />
+        </div>
+        <div>
+          <label for="rvDate">본 날짜</label>
+          <input type="date" id="rvDate" />
+        </div>
+        <div>
+          <label>포스터 · 표지 (선택)</label>
+          <div class="rv-pf">
+            <div class="pv" id="rvPosterPv">🎬</div>
+            <div class="side">
+              <button type="button" id="rvPosterBtn">사진 고르기</button>
+              <button type="button" id="rvPosterDel">빼기</button>
+              <input type="file" id="rvPosterInput" accept="image/*" style="display:none" />
+            </div>
+          </div>
+        </div>
+        <div>
+          <label>별점 (10점 만점, 선택)</label>
+          <div class="rv-scorebox">
+            <div class="one u1"><div class="who"><span class="dot"></span><span id="rvWho1">현선</span></div><input type="text" id="rvScore1" inputmode="decimal" placeholder="예) 8.9" maxlength="4" /></div>
+            <div class="one u2"><div class="who"><span class="dot"></span><span id="rvWho2">서우</span></div><input type="text" id="rvScore2" inputmode="decimal" placeholder="예) 9.2" maxlength="4" /></div>
+          </div>
+        </div>
+        <div>
+          <label for="rvNotes">감상</label>
+          <textarea id="rvNotes" placeholder="한 줄에 하나씩 적으면 목록으로 정리돼요.&#10;&#10;확실히 젊은 감독이 갖다주는 센세이션이 있다&#10;영화도 점점 방전하지 않으면 살아남기 힘들구나"></textarea>
+          <div class="hint">줄을 바꿀 때마다 하나씩 쌓여요. 블로그에 쓰던 것처럼 편하게 적으세요.</div>
+        </div>
+        <div class="err" id="rvErr" style="min-height:0;color:var(--rose);font-size:13px;"></div>
+        <button class="btn btn-gold" id="rvSaveBtn" type="button">간직하기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="moreOverlay">
   <div class="modal">
     <div class="modal-head"><h2>더보기</h2><button class="x" id="moreClose" aria-label="닫기">×</button></div>
@@ -980,7 +1115,7 @@
 
 <div class="overlay" id="addOverlay"><button class="float-x" id="addFloatX" type="button" aria-label="작성 화면 닫기"><span class="lbl">닫기</span>×</button>
   <div class="modal" role="dialog" aria-modal="true">
-    <div class="modal-head"><h2 id="addTitle">오늘의 추억</h2><span class="draft-tag" id="draftTag"></span><span class="ver-tag" id="verTag">v99</span><button class="x" id="addClose" aria-label="닫기">×</button></div>
+    <div class="modal-head"><h2 id="addTitle">오늘의 추억</h2><span class="draft-tag" id="draftTag"></span><span class="ver-tag" id="verTag">v101</span><button class="x" id="addClose" aria-label="닫기">×</button></div>
     <div class="modal-body">
       <div class="field">
         <div class="photo-drop" id="photoDrop">📷 사진 더하기 (여러 장 가능, 선택)</div>
@@ -1289,7 +1424,9 @@ async function doSetup() {
   $("setupBtn").disabled = true;
   try {
     await setDoc(doc(db, SETTINGS_DOC[0], SETTINGS_DOC[1]), settings);
-    enterMain();
+    if (!me) me = settings.name1;
+    try { localStorage.setItem("me_name", me); } catch (e) {}
+    withTimeout(startVisit(), 7000, "접속 기록").catch(function () {}).then(enterMain);
   } catch (e) {
     err.textContent = "저장에 실패했어요. 보안 규칙이 쓰기를 허용하는지 확인해주세요.";
     $("setupBtn").disabled = false;
@@ -1298,6 +1435,7 @@ async function doSetup() {
 /* ===== 누가 들어왔는지 + 기기와 상관없는 '지난 방문 시각' ===== */
 var me = null, notifBase = 0;
 var VISIT_DOC = ["settings", "visits"];
+var visitDoc = {}, visitUnsub = null, visitReady = null;
 function meKey() { return (me && settings && me === settings.name2) ? "u2" : "u1"; }
 function buildWhoRow() {
   var box = $("whoRow"); if (!box || !settings) return;
@@ -1317,22 +1455,47 @@ function buildWhoRow() {
     box.appendChild(b);
   });
 }
+function readKey() { return meKey() === "u2" ? "r2" : "r1"; }
+function localVisit(k) { try { return parseInt(localStorage.getItem("visit_" + k) || "0", 10) || 0; } catch (e) { return 0; } }
+function saveLocalVisit(k, t) { try { localStorage.setItem("visit_" + k, String(t)); } catch (e) {} }
+
+/* 접속 기록은 설정과 같은 방식(구독)으로 읽는다.
+   getDoc 한 번 읽기는 이 환경에서 응답이 멈추는 일이 있어 잠금화면에서 넘어가지 못했다. */
+function subscribeVisits() {
+  if (visitReady) return visitReady;
+  visitReady = new Promise(function (resolve) {
+    var settled = false;
+    var t = setTimeout(function () { if (!settled) { settled = true; resolve(false); } }, 4500);
+    function fail() { if (!settled) { settled = true; clearTimeout(t); resolve(false); } }
+    try {
+      visitUnsub = onSnapshot(doc(db, VISIT_DOC[0], VISIT_DOC[1]), function (snap) {
+        visitDoc = (snap && snap.exists() ? snap.data() : null) || {};
+        if (!settled) { settled = true; clearTimeout(t); resolve(true); }
+        updateNotifBadge();
+      }, fail);
+    } catch (e) { fail(); }
+  });
+  return visitReady;
+}
 async function startVisit() {
-  var ref = doc(db, VISIT_DOC[0], VISIT_DOC[1]);
-  var k = meKey(), prev = 0;
-  try {
-    var snap = await getDoc(ref);
-    var d = (snap.exists() ? snap.data() : null) || {};
-    prev = d[k] || 0;
-  } catch (e) { prev = 0; }
-  /* 처음 들어오는 사람은 지금을 기준으로 — 지난 기록이 통째로 새 소식이 되지 않게 */
-  notifBase = prev || Date.now();
-  var f = {}; f[k] = Date.now();
-  try { await setDoc(ref, f, { merge: true }); } catch (e) {}
+  var k = meKey(), mirror = localVisit(k);
+  /* 서버를 못 읽어도 알림이 통째로 사라지지 않게, 이 기기에 남은 기록부터 기준으로 잡는다 */
+  notifBase = mirror || Date.now();
+  var ok = await subscribeVisits();
+  if (ok) {
+    var srv = visitDoc[k] || 0;
+    if (srv || mirror) notifBase = Math.max(srv, mirror) || notifBase;
+  }
+  var now = Date.now();
+  saveLocalVisit(k, now);
+  var f = {}; f[k] = now;
+  try { setDoc(doc(db, VISIT_DOC[0], VISIT_DOC[1]), f, { merge: true }); } catch (e) {}
 }
 async function markAllSeenNow() {
   notifBase = Date.now();
-  var f = {}; f[meKey()] = notifBase;
+  var k = meKey();
+  saveLocalVisit(k, notifBase);
+  var f = {}; f[k] = notifBase; f[readKey()] = [];
   try { await setDoc(doc(db, VISIT_DOC[0], VISIT_DOC[1]), f, { merge: true }); } catch (e) {}
 }
 function doUnlock() {
@@ -1341,13 +1504,14 @@ function doUnlock() {
   if (pin.length !== 4) { err.textContent = "암호 4자리를 입력해주세요."; return; }
   if (pin !== settings.pin) { err.textContent = "암호가 맞지 않아요."; clearPins($("lockPins")); return; }
   err.textContent = "";
-  startVisit().then(enterMain, enterMain);
+  withTimeout(startVisit(), 7000, "접속 기록").catch(function () {}).then(enterMain);
 }
 
 /* ---------- main ---------- */
 function enterMain() {
   if (me) { draftAuthor = me; commentAuthor = me; }
   subscribeBucket();           /* 버킷 변화도 새 소식에 들어가므로 미리 구독 */
+  subscribeReviews();          /* 감상 기록도 마찬가지 */
   $("ddayNum").innerHTML = daysTogether().toLocaleString() + ' <small>일째</small>';
   $("milestoneEl").textContent = nextMilestone();
   buildAuthorPicker();
@@ -2363,7 +2527,7 @@ function renderCalDayList(ds) {
 
 /* ---------- tabbar & more ---------- */
 function setTab(name) {
-  ["Home", "Cal", "Plan", "Bucket", "More"].forEach(function (n) {
+  ["Home", "Cal", "Plan", "Bucket", "Review", "More"].forEach(function (n) {
     var el = $("tab" + n); if (el) el.classList.toggle("active", n.toLowerCase() === name);
   });
 }
@@ -2777,6 +2941,363 @@ async function delBucket(it) {
 function openBucket() { subscribeBucket(); renderBucket(); $("bucketOverlay").classList.add("active"); document.body.style.overflow = "hidden"; }
 function closeBucket() { editingBucketId = null; openBucketNote = null; $("bucketOverlay").classList.remove("active"); document.body.style.overflow = ""; setTab("home"); }
 
+/* ---------- 감상 기록 (영화·드라마·책·공연) ---------- */
+var REVIEW_COL = "reviews";
+var reviews = [], reviewUnsub = null;
+var REVIEW_KINDS = [
+  { k: "movie", e: "🎬", t: "영화" },
+  { k: "series", e: "📺", t: "드라마" },
+  { k: "book", e: "📚", t: "책" },
+  { k: "show", e: "🎭", t: "공연·전시" }
+];
+var reviewFilter = "all";
+var openReviewId = null;
+var editingReviewId = null;
+var rvDraftKind = "movie";
+var rvDraftPoster = null;     /* 새로 고른 포스터 (base64) */
+var rvDraftPosterId = null;   /* 이미 올라간 포스터 문서 */
+var rvDraftPosterThumb = null;
+
+function kindOf(r) { var k = r && r.kind; return REVIEW_KINDS.some(function (x) { return x.k === k; }) ? k : "movie"; }
+function kindInfo(k) { return REVIEW_KINDS.filter(function (x) { return x.k === k; })[0] || REVIEW_KINDS[0]; }
+function rvCommentsOf(r) { return Array.isArray(r && r.comments) ? r.comments : []; }
+function fmtScore(n) {
+  if (typeof n !== "number" || isNaN(n)) return null;
+  return (Math.round(n * 10) / 10).toFixed(1).replace(/\.0$/, "");
+}
+function parseScore(v) {
+  var t = String(v == null ? "" : v).trim();
+  if (!t) return null;
+  var n = parseFloat(t);
+  if (isNaN(n)) return null;
+  return Math.max(0, Math.min(10, n));
+}
+function subscribeReviews() {
+  if (reviewUnsub) return;
+  reviewUnsub = onSnapshot(collection(db, REVIEW_COL), function (snap) {
+    reviews = [];
+    snap.forEach(function (d) { var x = d.data(); x.id = d.id; reviews.push(x); });
+    reviews.sort(function (a, b) {
+      var da = a.date || "", db2 = b.date || "";
+      if (da !== db2) return da < db2 ? 1 : -1;
+      return (b.createdAt || 0) - (a.createdAt || 0);
+    });
+    renderReviews(); buildReviewFilter(); updateNotifBadge();
+  }, function () {});
+}
+function buildReviewFilter() {
+  var box = $("reviewFilterRow"); if (!box) return;
+  box.innerHTML = "";
+  var opts = [{ k: "all", e: "🗂️", t: "전체" }].concat(REVIEW_KINDS);
+  opts.forEach(function (c) {
+    var n = c.k === "all" ? reviews.length : reviews.filter(function (r) { return kindOf(r) === c.k; }).length;
+    var b = document.createElement("button"); b.type = "button";
+    b.textContent = c.e + " " + c.t + (n ? " " + n : "");
+    if (c.k === reviewFilter) b.className = "sel";
+    b.onclick = function () { reviewFilter = c.k; buildReviewFilter(); renderReviews(); };
+    box.appendChild(b);
+  });
+}
+function renderReviews() {
+  var box = $("reviewList"); if (!box) return;
+  var list = reviews.filter(function (r) { return reviewFilter === "all" || kindOf(r) === reviewFilter; });
+  box.innerHTML = "";
+  if (!list.length) {
+    box.innerHTML = reviews.length
+      ? '<div class="rv-empty">이 분류엔 아직 없어요.</div>'
+      : '<div class="rv-empty">아직 남긴 감상이 없어요.<br>같이 본 것부터 적어볼까요 🎬</div>';
+    return;
+  }
+  list.forEach(function (r) { box.appendChild(buildReviewRow(r)); });
+}
+function scoreChip(name, val, cls) {
+  var s = fmtScore(val);
+  var el = document.createElement("span");
+  el.className = "rv-sc " + cls + (s === null ? " none" : "");
+  el.textContent = s === null ? (name + " –") : (name + " " + s);
+  return el;
+}
+function buildReviewRow(r) {
+  var wrap = document.createElement("div"); wrap.className = "rv-row";
+  var card = document.createElement("div"); card.className = "rv-card";
+
+  var ki = kindInfo(kindOf(r));
+  if (r.poster) {
+    var im = document.createElement("img"); im.className = "rv-poster"; im.src = r.poster; im.alt = "";
+    card.appendChild(im);
+  } else {
+    var ph = document.createElement("div"); ph.className = "rv-poster none"; ph.textContent = ki.e;
+    card.appendChild(ph);
+  }
+
+  var info = document.createElement("div"); info.className = "rv-info";
+  var kd = document.createElement("span"); kd.className = "rv-kind"; kd.textContent = ki.e + " " + ki.t;
+  var ti = document.createElement("div"); ti.className = "rv-title"; ti.textContent = r.title || "(제목 없음)";
+  info.appendChild(kd); info.appendChild(ti);
+
+  var metaBits = [];
+  if (r.meta) metaBits.push(r.meta);
+  if (r.date) metaBits.push(fmtDate(r.date) + " 봤어요");
+  if (metaBits.length) {
+    var mt = document.createElement("div"); mt.className = "rv-meta"; mt.textContent = metaBits.join("  ·  ");
+    info.appendChild(mt);
+  }
+
+  var sc = document.createElement("div"); sc.className = "rv-scores";
+  var n1 = (settings && settings.name1) || "나", n2 = (settings && settings.name2) || "너";
+  sc.appendChild(scoreChip(n1, r.score1, "u1"));
+  sc.appendChild(scoreChip(n2, r.score2, "u2"));
+  var a = fmtScore(r.score1), b = fmtScore(r.score2);
+  if (a !== null && b !== null) {
+    var av = document.createElement("span"); av.className = "rv-avg";
+    av.textContent = "평균 " + fmtScore((r.score1 + r.score2) / 2);
+    sc.appendChild(av);
+  }
+  var cn = rvCommentsOf(r).length;
+  if (cn) { var cc = document.createElement("span"); cc.className = "rv-cmtn"; cc.textContent = "💬 " + cn; sc.appendChild(cc); }
+  info.appendChild(sc);
+  card.appendChild(info);
+
+  card.onclick = function () { openReviewId = (openReviewId === r.id) ? null : r.id; renderReviews(); };
+  wrap.appendChild(card);
+
+  if (openReviewId === r.id) wrap.appendChild(buildReviewBody(r));
+  return wrap;
+}
+function buildReviewBody(r) {
+  var body = document.createElement("div"); body.className = "rv-body on";
+
+  if (r.posterId || r.poster) {
+    var big = document.createElement("img"); big.className = "rv-big"; big.alt = "";
+    big.src = r.poster || "";
+    if (r.posterId) {
+      if (_photoDocCache[r.posterId]) big.src = _photoDocCache[r.posterId];
+      else getDoc(doc(db, PHOTO_COL, r.posterId)).then(function (sn) {
+        if (!sn.exists()) return;
+        var dd = sn.data();
+        if (dd && dd.data) { _photoDocCache[r.posterId] = dd.data; big.src = dd.data; }
+      }).catch(function () {});
+    }
+    big.onclick = function () { if (big.src) openLightbox(big.src, [big.src], 0); };
+    body.appendChild(big);
+  }
+
+  var nt = document.createElement("div"); nt.className = "rv-notes";
+  var lines = String(r.notes || "").split("\n").map(function (x) { return x.replace(/^[-•·]\s*/, "").trim(); }).filter(Boolean);
+  if (lines.length) {
+    var ul = document.createElement("ul");
+    lines.forEach(function (t) { var li = document.createElement("li"); li.textContent = t; ul.appendChild(li); });
+    nt.appendChild(ul);
+  } else {
+    var no = document.createElement("div"); no.className = "rv-none"; no.textContent = "아직 적은 감상이 없어요.";
+    nt.appendChild(no);
+  }
+  if (r.by) {
+    var by = document.createElement("div"); by.className = "rv-by";
+    by.textContent = r.by + " 기록" + (r.createdAt ? "  ·  " + fmtCommentTime(r.createdAt) : "");
+    nt.appendChild(by);
+  }
+  body.appendChild(nt);
+
+  var acts = document.createElement("div"); acts.className = "rv-acts";
+  var ed = document.createElement("button"); ed.type = "button"; ed.textContent = "✎ 고치기";
+  ed.onclick = function (e) { e.stopPropagation(); openReviewForm(r); };
+  var gr = document.createElement("span"); gr.className = "grow";
+  var dl = document.createElement("button"); dl.type = "button"; dl.className = "del"; dl.textContent = "지우기";
+  dl.onclick = function (e) { e.stopPropagation(); delReview(r); };
+  acts.appendChild(ed); acts.appendChild(gr); acts.appendChild(dl);
+  body.appendChild(acts);
+
+  body.appendChild(buildReviewComments(r));
+  return body;
+}
+/* 감상에 주고받는 이야기 — 버킷과 같은 모양 */
+function buildReviewComments(r) {
+  var box = document.createElement("div"); box.className = "bk-cmt";
+  var list = rvCommentsOf(r).slice().sort(function (a, b) { return (a.at || 0) - (b.at || 0); });
+
+  var ti = document.createElement("div"); ti.className = "bk-cmt-title";
+  ti.textContent = "💬 주고받은 이야기" + (list.length ? " " + list.length : "");
+  box.appendChild(ti);
+
+  if (!list.length) {
+    var em = document.createElement("div"); em.className = "bk-cmt-empty";
+    em.textContent = "아직 남긴 이야기가 없어요.";
+    box.appendChild(em);
+  }
+  list.forEach(function (c) {
+    var row = document.createElement("div"); row.className = "bk-cmt-item";
+    var av = document.createElement("div"); av.className = "bk-cmt-av " + whoClass(c.author);
+    av.textContent = (c.author || "?").slice(0, 1);
+    var bd = document.createElement("div"); bd.className = "bk-cmt-body";
+    var hd = document.createElement("div"); hd.className = "bk-cmt-head";
+    var wn = document.createElement("span"); wn.className = "bk-cmt-who"; wn.textContent = c.author || "";
+    var wh = document.createElement("span"); wh.className = "bk-cmt-when"; wh.textContent = fmtCommentTime(c.at);
+    var dl = document.createElement("button"); dl.type = "button"; dl.className = "bk-cmt-del"; dl.textContent = "삭제";
+    dl.onclick = function (e) { e.stopPropagation(); delReviewComment(r, c.cid); };
+    hd.appendChild(wn); hd.appendChild(wh); hd.appendChild(dl);
+    var tx = document.createElement("div"); tx.className = "bk-cmt-text"; tx.textContent = c.text || "";
+    bd.appendChild(hd); bd.appendChild(tx);
+    row.appendChild(av); row.appendChild(bd);
+    box.appendChild(row);
+  });
+
+  var row2 = document.createElement("div"); row2.className = "bk-cmt-row";
+  var ta = document.createElement("textarea"); ta.rows = 1;
+  ta.placeholder = (me ? me + "(으)로 " : "") + "한마디 남기기";
+  ta.maxLength = 300;
+  ta.addEventListener("input", function () { autoGrow(ta); });
+  ta.addEventListener("click", function (e) { e.stopPropagation(); });
+  var sd = document.createElement("button"); sd.type = "button"; sd.textContent = "등록";
+  function send() {
+    var t = (ta.value || "").trim();
+    if (!t) return;
+    sd.disabled = true;
+    addReviewComment(r, t).then(function () { ta.value = ""; autoGrow(ta); })
+      .catch(function () {}).then(function () { sd.disabled = false; });
+  }
+  sd.onclick = function (e) { e.stopPropagation(); send(); };
+  ta.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(); }
+  });
+  row2.appendChild(ta); row2.appendChild(sd);
+  box.appendChild(row2);
+  return box;
+}
+async function addReviewComment(r, text) {
+  var c = {
+    cid: "r" + Date.now() + Math.random().toString(36).slice(2, 6),
+    at: Date.now(),
+    author: me || (settings && settings.name1) || "나",
+    text: text
+  };
+  try { await updateDoc(doc(db, REVIEW_COL, r.id), { comments: rvCommentsOf(r).concat([c]) }); }
+  catch (e) { toast("남기지 못했어요."); throw e; }
+}
+async function delReviewComment(r, cid) {
+  if (!confirm("이 이야기를 지울까요?")) return;
+  var remain = rvCommentsOf(r).filter(function (x) { return x.cid !== cid; });
+  try { await updateDoc(doc(db, REVIEW_COL, r.id), { comments: remain }); }
+  catch (e) { toast("지우지 못했어요."); }
+}
+function openReview() {
+  subscribeReviews(); buildReviewFilter(); renderReviews();
+  $("reviewOverlay").classList.add("active"); document.body.style.overflow = "hidden";
+}
+function closeReview() {
+  openReviewId = null;
+  $("reviewOverlay").classList.remove("active"); document.body.style.overflow = ""; setTab("home");
+}
+/* ----- 작성 폼 ----- */
+function buildKindPicker() {
+  var box = $("rvKinds"); if (!box) return;
+  box.innerHTML = "";
+  REVIEW_KINDS.forEach(function (c) {
+    var b = document.createElement("button"); b.type = "button";
+    b.textContent = c.e + " " + c.t;
+    if (c.k === rvDraftKind) b.className = "sel";
+    b.onclick = function () { rvDraftKind = c.k; buildKindPicker(); renderPosterPv(); };
+    box.appendChild(b);
+  });
+}
+function renderPosterPv() {
+  var pv = $("rvPosterPv"); if (!pv) return;
+  var src = rvDraftPoster || (rvDraftPosterId && _photoDocCache[rvDraftPosterId]) || rvDraftPosterThumb;
+  pv.innerHTML = "";
+  if (src) { var im = document.createElement("img"); im.src = src; im.alt = ""; pv.appendChild(im); }
+  else pv.textContent = kindInfo(rvDraftKind).e;
+}
+function openReviewForm(r) {
+  editingReviewId = r ? r.id : null;
+  $("rvFormTitle").textContent = r ? "감상 고치기" : "감상 남기기";
+  $("rvSaveBtn").textContent = r ? "고치기" : "간직하기";
+  $("rvErr").textContent = "";
+  var n1 = (settings && settings.name1) || "나", n2 = (settings && settings.name2) || "너";
+  $("rvWho1").textContent = n1; $("rvWho2").textContent = n2;
+  if (r) {
+    rvDraftKind = kindOf(r);
+    $("rvTitle").value = r.title || "";
+    $("rvMeta").value = r.meta || "";
+    $("rvDate").value = r.date || todayStr();
+    $("rvScore1").value = fmtScore(r.score1) || "";
+    $("rvScore2").value = fmtScore(r.score2) || "";
+    $("rvNotes").value = r.notes || "";
+    rvDraftPoster = null; rvDraftPosterId = r.posterId || null; rvDraftPosterThumb = r.poster || null;
+    if (rvDraftPosterId && !_photoDocCache[rvDraftPosterId]) {
+      getDoc(doc(db, PHOTO_COL, rvDraftPosterId)).then(function (sn) {
+        if (!sn.exists()) return;
+        var dd = sn.data();
+        if (dd && dd.data) { _photoDocCache[rvDraftPosterId] = dd.data; renderPosterPv(); }
+      }).catch(function () {});
+    }
+  } else {
+    rvDraftKind = (reviewFilter !== "all") ? reviewFilter : "movie";
+    $("rvTitle").value = ""; $("rvMeta").value = ""; $("rvDate").value = todayStr();
+    $("rvScore1").value = ""; $("rvScore2").value = ""; $("rvNotes").value = "";
+    rvDraftPoster = null; rvDraftPosterId = null; rvDraftPosterThumb = null;
+  }
+  buildKindPicker(); renderPosterPv();
+  $("reviewFormOverlay").classList.add("active"); document.body.style.overflow = "hidden";
+}
+function closeReviewForm() {
+  $("reviewFormOverlay").classList.remove("active");
+  if (!$("reviewOverlay").classList.contains("active")) document.body.style.overflow = "";
+}
+async function saveReview() {
+  var title = ($("rvTitle").value || "").trim();
+  var err = $("rvErr");
+  if (!title) { err.textContent = "제목을 적어주세요."; return; }
+  err.textContent = "";
+  var btn = $("rvSaveBtn");
+  btn.disabled = true; btn.textContent = "간직하는 중…";
+  try {
+    var posterId = rvDraftPosterId, poster = rvDraftPosterThumb;
+    if (rvDraftPoster) {
+      if (rvDraftPosterId) { try { await deleteDoc(doc(db, PHOTO_COL, rvDraftPosterId)); delete _photoDocCache[rvDraftPosterId]; } catch (e) {} }
+      var ref = await addDoc(collection(db, PHOTO_COL), { data: rvDraftPoster, createdAt: Date.now() });
+      posterId = ref.id; _photoDocCache[posterId] = rvDraftPoster;
+      poster = await makeThumb(rvDraftPoster);
+    } else if (!rvDraftPosterId) { posterId = null; poster = null; }
+
+    var f = {
+      kind: rvDraftKind,
+      title: title,
+      meta: ($("rvMeta").value || "").trim(),
+      date: $("rvDate").value || todayStr(),
+      score1: parseScore($("rvScore1").value),
+      score2: parseScore($("rvScore2").value),
+      notes: ($("rvNotes").value || "").trim(),
+      posterId: posterId,
+      poster: poster
+    };
+    if (editingReviewId) {
+      await updateDoc(doc(db, REVIEW_COL, editingReviewId), f);
+      toast("감상을 고쳤어요 ♥");
+    } else {
+      f.createdAt = Date.now();
+      f.by = me || (settings && settings.name1) || null;
+      f.comments = [];
+      var nr = await addDoc(collection(db, REVIEW_COL), f);
+      addRead("rv:" + nr.id);
+      toast("감상을 간직했어요 ♥");
+    }
+    closeReviewForm();
+  } catch (e) {
+    err.textContent = "저장하지 못했어요. 잠시 후 다시 해주세요.";
+  } finally {
+    btn.disabled = false; btn.textContent = editingReviewId ? "고치기" : "간직하기";
+  }
+}
+async function delReview(r) {
+  if (!confirm("이 감상을 지울까요?")) return;
+  try {
+    if (r.posterId) { try { await deleteDoc(doc(db, PHOTO_COL, r.posterId)); delete _photoDocCache[r.posterId]; } catch (e) {} }
+    await deleteDoc(doc(db, REVIEW_COL, r.id));
+    openReviewId = null;
+    toast("지웠어요.");
+  } catch (e) { toast("지우지 못했어요."); }
+}
+
 /* ---------- date plans ---------- */
 var PLAN_COL = "plans";
 var planItems = [];
@@ -2914,14 +3435,32 @@ function closePlan() { resetPlanForm(); $("planOverlay").classList.remove("activ
 var showFavOnly = false;
 function getSeen(id) { try { return parseInt(localStorage.getItem("seen_" + id) || "0", 10) || 0; } catch (e) { return 0; } }
 function setSeen(id, n) { try { localStorage.setItem("seen_" + id, String(n)); } catch (e) {} }
-function getNotifSeen() { try { return parseInt(localStorage.getItem("notif_seen") || "0", 10) || 0; } catch (e) { return 0; } }
-function setNotifSeen(t) { try { localStorage.setItem("notif_seen", String(t)); } catch (e) {} }
-function getReadSet() { try { return new Set(JSON.parse(localStorage.getItem("notif_read") || "[]")); } catch (e) { return new Set(); } }
-function saveReadSet(s) { try { localStorage.setItem("notif_read", JSON.stringify(Array.from(s))); } catch (e) {} }
-function addRead(id) { var s = getReadSet(); s.add(id); saveReadSet(s); }
-function clearRead() { try { localStorage.removeItem("notif_read"); } catch (e) {} }
+/* 읽음 목록은 사람별로 나눠 둔다 — 한 기기를 둘이 쓰면 섞이기 때문 */
+function readLocalKey() { return "notif_read_" + readKey(); }
+function getReadSet() {
+  var s = new Set();
+  try { JSON.parse(localStorage.getItem(readLocalKey()) || "[]").forEach(function (x) { s.add(x); }); } catch (e) {}
+  var srv = visitDoc[readKey()];
+  if (Array.isArray(srv)) srv.forEach(function (x) { s.add(x); });
+  return s;
+}
+function saveReadSet(s) { try { localStorage.setItem(readLocalKey(), JSON.stringify(Array.from(s))); } catch (e) {} }
+var readSyncTimer = null;
+function syncReadSet(s) {
+  clearTimeout(readSyncTimer);
+  readSyncTimer = setTimeout(function () {
+    var f = {}; f[readKey()] = Array.from(s).slice(-300);
+    try { setDoc(doc(db, VISIT_DOC[0], VISIT_DOC[1]), f, { merge: true }); } catch (e) {}
+  }, 700);
+}
+function addRead(id) { var s = getReadSet(); s.add(id); saveReadSet(s); syncReadSet(s); }
+function clearRead() {
+  try { localStorage.removeItem(readLocalKey()); } catch (e) {}
+  try { localStorage.removeItem("notif_read"); } catch (e) {}   /* 옛 기록 정리 */
+  visitDoc[readKey()] = [];
+}
 function collectNewItems() {
-  var base = notifBase || getNotifSeen(), read = getReadSet(), arr = [];
+  var base = notifBase || localVisit(meKey()), read = getReadSet(), arr = [];
   function mine(who) { return !!me && who === me; }
   memories.forEach(function (m) {
     var pid = "post:" + m.id;
@@ -2946,6 +3485,14 @@ function collectNewItems() {
     (Array.isArray(b.comments) ? b.comments : []).forEach(function (c) {
       var bc = "bkcmt:" + b.id + ":" + c.cid;
       if ((c.at || 0) > base && !mine(c.author) && !read.has(bc)) arr.push({ kind: "bucketComment", id: bc, time: c.at || 0, b: b, c: c });
+    });
+  });
+  reviews.forEach(function (r) {
+    var rid = "rv:" + r.id;
+    if ((r.createdAt || 0) > base && r.by && !mine(r.by) && !read.has(rid)) arr.push({ kind: "review", id: rid, time: r.createdAt || 0, r: r });
+    (Array.isArray(r.comments) ? r.comments : []).forEach(function (c) {
+      var rc = "rvcmt:" + r.id + ":" + c.cid;
+      if ((c.at || 0) > base && !mine(c.author) && !read.has(rc)) arr.push({ kind: "reviewComment", id: rc, time: c.at || 0, r: r, c: c });
     });
   });
   arr.sort(function (a, b) { return b.time - a.time; });
@@ -2988,11 +3535,20 @@ function renderNotif() {
       ico = "💬";
       title = esc(it.c.author || "") + "님이 버킷에 남긴 말";
       desc = (it.c.text || "") + "  —  " + (it.b.text || "");
+    } else if (it.kind === "review") {
+      ico = kindInfo(kindOf(it.r)).e;
+      title = esc(it.r.by || "") + "님의 새 감상";
+      desc = it.r.title || "";
+    } else if (it.kind === "reviewComment") {
+      ico = "💬";
+      title = esc(it.c.author || "") + "님이 감상에 남긴 말";
+      desc = (it.c.text || "") + "  —  " + (it.r.title || "");
     }
     el.innerHTML = '<span class="notif-ico">' + ico + '</span><div class="notif-main"><div class="notif-t">' + title + '</div><div class="notif-d">' + esc(desc) + '</div><div class="notif-when">' + esc(fmtCommentTime(it.time)) + '</div></div>';
     el.onclick = function () {
       addRead(it.id); closeNotif();
       if (it.kind === "bucket" || it.kind === "bucketDone" || it.kind === "bucketComment") { openBucket(); if (it.b) { openBucketNote = it.b.id; renderBucket(); } }
+      else if (it.kind === "review" || it.kind === "reviewComment") { openReview(); setTab("review"); if (it.r) { openReviewId = it.r.id; reviewFilter = "all"; buildReviewFilter(); renderReviews(); } }
       else { openDetail(it.m); }
     };
     box.appendChild(el);
@@ -3848,11 +4404,28 @@ function init() {
   bindFloatX("detailOverlay", "detailFloatX");
   $("detailDel").onclick = deleteCurrent;
   $("detailEdit").onclick = editCurrent;
-  $("tabHome").onclick = function () { closeCal(); closeMore(); closePlan(); closeBucket(); setTab("home"); window.scrollTo({ top: 0, behavior: "smooth" }); };
-  $("tabCal").onclick = function () { closeMore(); closePlan(); closeBucket(); openCal(); setTab("cal"); };
-  $("tabPlan").onclick = function () { closeMore(); closeCal(); closeBucket(); openPlan(); setTab("plan"); };
-  $("tabBucket").onclick = function () { closeMore(); closeCal(); closePlan(); openBucket(); setTab("bucket"); };
-  $("tabMore").onclick = function () { closeCal(); closePlan(); closeBucket(); openMore(); setTab("more"); };
+  $("tabHome").onclick = function () { closeCal(); closeMore(); closePlan(); closeBucket(); closeReview(); setTab("home"); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  $("tabCal").onclick = function () { closeMore(); closePlan(); closeBucket(); closeReview(); openCal(); setTab("cal"); };
+  $("tabPlan").onclick = function () { closeMore(); closeCal(); closeBucket(); closeReview(); openPlan(); setTab("plan"); };
+  $("tabBucket").onclick = function () { closeMore(); closeCal(); closePlan(); closeReview(); openBucket(); setTab("bucket"); };
+  $("tabReview").onclick = function () { closeMore(); closeCal(); closePlan(); closeBucket(); openReview(); setTab("review"); };
+  $("tabMore").onclick = function () { closeCal(); closePlan(); closeBucket(); closeReview(); openMore(); setTab("more"); };
+  /* 감상 기록 */
+  $("reviewClose").onclick = closeReview;
+  $("reviewAddBtn").onclick = function () { openReviewForm(null); };
+  $("rvFormClose").onclick = closeReviewForm;
+  $("rvSaveBtn").onclick = saveReview;
+  $("rvPosterBtn").onclick = function () { $("rvPosterInput").click(); };
+  $("rvPosterDel").onclick = function () { rvDraftPoster = null; rvDraftPosterId = null; rvDraftPosterThumb = null; renderPosterPv(); };
+  $("rvPosterInput").addEventListener("change", function (e) {
+    var f = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!f || !f.type || f.type.indexOf("image") !== 0) return;
+    $("rvPosterPv").textContent = "…";
+    compressImage(f, 620000).then(function (b64) { rvDraftPoster = b64; renderPosterPv(); })
+      .catch(function () { renderPosterPv(); toast("사진을 불러오지 못했어요."); });
+  });
+  $("rvNotes").addEventListener("input", function () { this.style.height = "auto"; this.style.height = Math.min(this.scrollHeight, 420) + "px"; });
   $("notifBtn").onclick = openNotif;
   $("notifClose").onclick = closeNotif;
   $("notifReadAll").onclick = markAllRead;
