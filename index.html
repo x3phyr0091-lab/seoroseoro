@@ -1113,9 +1113,9 @@
   </div>
 </div>
 
-<div class="overlay" id="addOverlay"><button class="float-x" id="addFloatX" type="button" aria-label="작성 화면 닫기"><span class="lbl">닫기</span>×</button>
+<div class="overlay" id="addOverlay">
   <div class="modal" role="dialog" aria-modal="true">
-    <div class="modal-head"><h2 id="addTitle">오늘의 추억</h2><span class="draft-tag" id="draftTag"></span><span class="ver-tag" id="verTag">v101</span><button class="x" id="addClose" aria-label="닫기">×</button></div>
+    <div class="modal-head"><h2 id="addTitle">오늘의 추억</h2><span class="draft-tag" id="draftTag"></span><span class="ver-tag" id="verTag">v102</span><button class="x" id="addClose" aria-label="닫기">×</button></div>
     <div class="modal-body">
       <div class="field">
         <div class="photo-drop" id="photoDrop">📷 사진 더하기 (여러 장 가능, 선택)</div>
@@ -1206,7 +1206,7 @@
 </div>
 
 <!-- ============ DETAIL MODAL ============ -->
-<div class="overlay" id="detailOverlay"><button class="float-x" id="detailFloatX" type="button" aria-label="닫기"><span class="lbl">닫기</span>×</button>
+<div class="overlay" id="detailOverlay">
   <div class="modal modal-lg" role="dialog" aria-modal="true">
     <div class="gallery-wrap" id="galleryWrap" style="display:none">
       <div class="detail-gallery" id="detailGallery"></div>
@@ -1235,6 +1235,7 @@
   </div>
 </div>
 
+<button class="float-x" id="globalClose" type="button" aria-label="닫기"><span class="lbl">닫기</span>×</button>
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -1815,6 +1816,7 @@ function openAdd(editMem) {
     $("memPw").value = editMem.pw || "";
     $("memTitle").innerHTML = editMem.title || "";
     $("memContent").innerHTML = editMem.content || "";
+    unwrapBoxStyle($("memTitle")); unwrapBoxStyle($("memContent"));
     draftMoods = moodsOf(editMem).slice();
     draftAuthor = editMem.author || null;
     draftSel = []; lastPickIdx = -1;
@@ -1847,6 +1849,7 @@ function openAdd(editMem) {
   } else {
     $("memDate").value = todayStr(); $("memEndDate").value = ""; $("memPlace").value = ""; $("memPw").value = "";
     $("memTitle").innerHTML = ""; $("memContent").innerHTML = "";
+    ["memTitle", "memContent"].forEach(function (id) { var c = $(id); c.style.fontFamily = ""; c.style.fontSize = ""; });
     draftPhotos = []; draftMoods = []; draftAuthor = null; draftCoverIdx = 0; draftSel = []; lastPickIdx = -1; draftOrigCover = null; draftOrigCoverId = null;
     renderPhotoGrid(); $("photoDrop").textContent = dropLabel();
     var d = getDraft();
@@ -1866,7 +1869,7 @@ function openAdd(editMem) {
   for (var i = 0; i < auths.length; i++) auths[i].classList.toggle("sel", !!draftAuthor && auths[i].textContent === draftAuthor);
   $("addOverlay").classList.add("active"); document.body.style.overflow = "hidden";
 }
-function closeAdd() { $("addOverlay").classList.remove("active"); document.body.style.overflow = ""; $("addFloatX").classList.remove("on"); }
+function closeAdd() { $("addOverlay").classList.remove("active"); document.body.style.overflow = ""; $("globalClose").classList.remove("on"); }
 
 var DRAFT_KEY = "mem_draft_v1";
 var draftSaveTimer = null;
@@ -2101,8 +2104,8 @@ function startPhotoDrag(e, thumb, fromIdx) {
 async function saveMemory() {
   var tEl = $("memTitle"), cEl = $("memContent");
   var titleText = (tEl.textContent || "").trim(), contentText = (cEl.textContent || "").trim();
-  var title = titleText ? tEl.innerHTML : "";
-  var content = contentText ? cEl.innerHTML : "";
+  var title = titleText ? wrapBoxStyle(tEl) : "";
+  var content = contentText ? wrapBoxStyle(cEl) : "";
   var date = $("memDate").value || todayStr(), place = $("memPlace").value.trim();
   var endDate = $("memEndDate").value || "";
   var pw = ($("memPw").value || "").trim();
@@ -2371,7 +2374,7 @@ function openDetail(m) {
   renderComments(m);
   renderParaComments(m);
 }
-function closeDetail() { $("detailOverlay").classList.remove("active"); document.body.style.overflow = ""; $("detailFloatX").classList.remove("on"); editingParaCid = null; detailCurrent = null; renderList(); }
+function closeDetail() { $("detailOverlay").classList.remove("active"); document.body.style.overflow = ""; $("globalClose").classList.remove("on"); editingParaCid = null; detailCurrent = null; renderList(); }
 
 /* ---------- reactions ---------- */
 var REACTS = ["❤️", "😂", "😮", "👍", "🥺"];
@@ -2523,6 +2526,88 @@ function renderCalDayList(ds) {
     box.appendChild(it2);
   });
   if (!anv && !hol && !mems.length && !pls.length) box.innerHTML = '<div class="cal-empty">이 날의 기록이 없어요.</div>';
+}
+
+/* ---------- 창 닫기 · 뒤로가기 ---------- */
+/* 열려 있는 창을 위에서부터 */
+var OVERLAY_ORDER = [
+  ["reviewFormOverlay", function () { closeReviewForm(); }],
+  ["addOverlay", function () { closeAdd(); }],
+  ["detailOverlay", function () { closeDetail(); }],
+  ["reviewOverlay", function () { closeReview(); }],
+  ["bucketOverlay", function () { closeBucket(); }],
+  ["planOverlay", function () { closePlan(); }],
+  ["calOverlay", function () { closeCal(); }],
+  ["galleryOverlay", function () { closeGallery(); }],
+  ["statsOverlay", function () { closeStats(); }],
+  ["annivOverlay", function () { closeAnniv(); }],
+  ["notifOverlay", function () { closeNotif(); }],
+  ["moreOverlay", function () { closeMore(); }]
+];
+/* 긴 창에서도 바로 나올 수 있게, 화면에 떠 있는 닫기 버튼 하나.
+   창 안에 두면 backdrop-filter 때문에 화면이 아니라 창 기준으로 고정돼 엉뚱한 자리에 떴다. */
+function updateFloatClose() {
+  var b = $("globalClose"); if (!b) return;
+  var show = false;
+  for (var i = 0; i < OVERLAY_ORDER.length; i++) {
+    var ov = $(OVERLAY_ORDER[i][0]);
+    if (!ov || !ov.classList.contains("active")) continue;
+    var sc = ov.querySelector(".modal-body");
+    var y = Math.max(ov.scrollTop || 0, sc ? (sc.scrollTop || 0) : 0);
+    show = y > 120;
+    break;
+  }
+  b.classList.toggle("on", show);
+}
+function setupFloatCloseButtons() {
+  var b = $("globalClose");
+  if (b) b.onclick = function (e) { e.stopPropagation(); closeTopOverlay(); updateFloatClose(); };
+  OVERLAY_ORDER.forEach(function (pair) {
+    var ov = $(pair[0]); if (!ov) return;
+    ov.addEventListener("scroll", updateFloatClose, { passive: true });
+    var sc = ov.querySelector(".modal-body");
+    if (sc) sc.addEventListener("scroll", updateFloatClose, { passive: true });
+  });
+}
+function openOverlayCount() {
+  var n = document.querySelectorAll(".overlay.active").length;
+  var lb = $("lightbox");
+  if (lb && lb.classList.contains("active")) n++;
+  return n;
+}
+function closeTopOverlay() {
+  var lb = $("lightbox");
+  if (lb && lb.classList.contains("active")) { closeLightbox(); return true; }
+  for (var i = 0; i < OVERLAY_ORDER.length; i++) {
+    var el = $(OVERLAY_ORDER[i][0]);
+    if (el && el.classList.contains("active")) { try { OVERLAY_ORDER[i][1](); } catch (e) {} return true; }
+  }
+  return false;
+}
+/* 안드로이드 뒤로가기로 앱이 꺼지지 않고 창만 닫히게 */
+function setupBackButton() {
+  var opened = 0, syncing = false;
+  function sync() {
+    var n = openOverlayCount();
+    if (n > opened) { for (var i = opened; i < n; i++) { try { history.pushState({ ov: 1 }, ""); } catch (e) {} } }
+    else if (n < opened && !syncing) {
+      syncing = true;
+      var diff = opened - n;
+      opened = n;
+      for (var j = 0; j < diff; j++) { try { history.back(); } catch (e) {} }
+      setTimeout(function () { syncing = false; }, 60);
+      return;
+    }
+    opened = n;
+  }
+  var mo = new MutationObserver(function () { updateFloatClose(); sync(); });
+  document.querySelectorAll(".overlay").forEach(function (el) { mo.observe(el, { attributes: true, attributeFilter: ["class"] }); });
+  var lb = $("lightbox");
+  if (lb) mo.observe(lb, { attributes: true, attributeFilter: ["class"] });
+  window.addEventListener("popstate", function () {
+    if (syncing) return;
+    if (openOverlayCount() > 0) { syncing = true; closeTopOverlay(); opened = openOverlayCount(); setTimeout(function () { syncing = false; }, 60); }
+  });
 }
 
 /* ---------- tabbar & more ---------- */
@@ -3698,6 +3783,31 @@ async function deleteCurrent() {
   catch (e) { toast("지우지 못했어요. 다시 시도해주세요."); }
 }
 function commentsOf(m) { return Array.isArray(m && m.comments) ? m.comments : []; }
+/* 글 전체 서체·크기는 바깥 div 에 실어 저장하고, 고칠 때 다시 상자로 되돌린다 */
+function wrapBoxStyle(ce) {
+  var ff = ce.style.fontFamily, fs = ce.style.fontSize;
+  if (!ff && !fs) return ce.innerHTML;
+  /* 서체 이름에 따옴표가 들어가므로 문자열로 엮지 않고 DOM 으로 만든다 */
+  var w = document.createElement("div");
+  if (ff) w.style.fontFamily = ff;
+  if (fs) w.style.fontSize = fs;
+  w.innerHTML = ce.innerHTML;
+  var box = document.createElement("div");
+  box.appendChild(w);
+  return box.innerHTML;
+}
+function unwrapBoxStyle(ce) {
+  ce.style.fontFamily = ""; ce.style.fontSize = "";
+  var kids = ce.children;
+  if (kids.length !== 1) return;
+  var w = kids[0];
+  if (w.tagName !== "DIV" || !w.getAttribute("style")) return;
+  var ff = w.style.fontFamily, fs = w.style.fontSize;
+  if (!ff && !fs) return;
+  if (ff) ce.style.fontFamily = ff;
+  if (fs) ce.style.fontSize = fs;
+  ce.innerHTML = w.innerHTML;
+}
 function autoGrow(el) { if (!el) return; el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 120) + "px"; }
 function fmtWriteTime(ts) {
   if (!ts) return "";
@@ -4247,14 +4357,49 @@ function init() {
   function buildSizeList() {
     var box = $("sizeList"); if (!box || box.dataset.built) return;
     for (var s = 8; s <= 40; s += 2) {
-      var b = document.createElement("button"); b.type = "button"; b.dataset.px = s;
-      b.innerHTML = '<span>' + s + '</span><span class="sp-u">px</span>';
-      box.appendChild(b);
+      (function (px) {
+        var b = document.createElement("button"); b.type = "button"; b.dataset.px = px;
+        b.innerHTML = '<span>' + px + '</span><span class="sp-u">px</span>';
+        /* 나중에 만들어지는 버튼이라 툴바의 일괄 배선을 못 받는다 — 여기서 직접 달아준다 */
+        b.addEventListener("mousedown", function (e) { e.preventDefault(); });
+        b.onclick = function () { applyFontSize(px); closeAllDD(); };
+        box.appendChild(b);
+      })(s);
     }
     box.dataset.built = "1";
   }
+  /* 글씨체·크기는 글 전체 설정으로 둔다.
+     모바일 브라우저는 엔터를 칠 때 서식 span 을 물려주지 않아, 문단마다 서체가 풀렸다. */
+  function selIsCollapsed() {
+    var sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return true;
+    if (savedRange && !savedRange.collapsed) return false;
+    return sel.isCollapsed;
+  }
+  function activeCE() {
+    if (savedRange) {
+      var n = savedRange.commonAncestorContainer;
+      if (n && n.nodeType !== 1) n = n.parentNode;
+      var ce = (n && n.closest) ? n.closest(".ce") : null;
+      if (ce) return ce;
+    }
+    var a = document.activeElement;
+    if (a && a.classList && a.classList.contains("ce")) return a;
+    return $("memContent");
+  }
+  function setBoxStyle(ce, prop, val) {
+    if (!ce) return;
+    ce.style[prop] = val;
+    /* 안에 남아 있던 설정은 걷어내야 글 전체가 실제로 바뀐다 */
+    Array.prototype.forEach.call(ce.querySelectorAll("[style], font"), function (el) {
+      if (prop === "fontFamily") { el.style.removeProperty("font-family"); if (el.tagName === "FONT") el.removeAttribute("face"); }
+      else { el.style.removeProperty("font-size"); if (el.tagName === "FONT") el.removeAttribute("size"); }
+    });
+    scheduleDraftSave();
+  }
   function applyFontSize(px) {
     px = parseInt(px, 10); if (!px) return;
+    if (selIsCollapsed()) { setBoxStyle(activeCE(), "fontSize", px + "px"); return; }
     restoreSelection();
     try { document.execCommand("styleWithCSS", false, false); } catch (e) {}
     document.execCommand("fontSize", false, "7");
@@ -4359,7 +4504,7 @@ function init() {
       try { document.execCommand("styleWithCSS", false, true); } catch (e) {}
       if (cmd) document.execCommand(cmd, false, null);
       else if (size) document.execCommand("fontSize", false, size);
-      else if (font) document.execCommand("fontName", false, font);
+      else if (font) { if (selIsCollapsed()) setBoxStyle(activeCE(), "fontFamily", font); else document.execCommand("fontName", false, font); }
       else if (block) document.execCommand("formatBlock", false, block);
       else if (hr) document.execCommand("insertHorizontalRule", false, null);
       else if (link) insertLink();
@@ -4389,19 +4534,8 @@ function init() {
   });
 
   $("detailClose").onclick = closeDetail;
-  /* 글이 길어져 위쪽 × 가 안 보일 때 떠 있는 닫기 버튼 */
-  $("addFloatX").onclick = closeAdd;
-  $("detailFloatX").onclick = closeDetail;
-  function bindFloatX(overlayId, btnId) {
-    var ov = $(overlayId), btn = $(btnId);
-    var sc = ov.querySelector(".modal-body") || ov;
-    function upd() { btn.classList.toggle("on", (sc.scrollTop || 0) > 160); }
-    sc.addEventListener("scroll", upd, { passive: true });
-    ov.addEventListener("scroll", upd, { passive: true });
-    ov.__updFloatX = upd;
-  }
-  bindFloatX("addOverlay", "addFloatX");
-  bindFloatX("detailOverlay", "detailFloatX");
+  setupFloatCloseButtons();
+  setupBackButton();
   $("detailDel").onclick = deleteCurrent;
   $("detailEdit").onclick = editCurrent;
   $("tabHome").onclick = function () { closeCal(); closeMore(); closePlan(); closeBucket(); closeReview(); setTab("home"); window.scrollTo({ top: 0, behavior: "smooth" }); };
