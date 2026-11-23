@@ -618,7 +618,13 @@
   .plan-item.past { opacity:.5; }
   .plan-when { flex:0 0 96px; min-width:96px; max-width:96px; text-align:center; padding-top:1px; }
   .plan-when .d { font-family:var(--serif); font-size:14.5px; color:var(--gold); font-weight:700; line-height:1.25; }
+  .cal-ev.cont { opacity:.6; }
+  .ci-day { font-family:var(--sans); font-size:10.5px; color:#9a5346; background:rgba(232,138,180,.16); border-radius:999px; padding:1px 7px; }
+  .plan-when .d2 { font-family:var(--serif); font-size:13px; color:var(--gold-soft); font-weight:700; line-height:1.25; margin-top:1px; }
   .plan-when .t { font-size:10.5px; color:var(--text-dim); margin-top:3px; white-space:nowrap; }
+  .plan-days { display:inline-block; margin-left:7px; font-family:var(--sans); font-size:10.5px; font-weight:700; color:#9a5346; background:rgba(232,138,180,.16); border-radius:999px; padding:2px 8px; vertical-align:middle; }
+  .plan-now { display:inline-block; margin-left:6px; font-family:var(--sans); font-size:10.5px; font-weight:700; color:#fff; background:var(--gold); border-radius:999px; padding:2px 8px; vertical-align:middle; }
+  .plan-item.past .plan-days, .plan-item.past .plan-now { opacity:.55; }
   .plan-tsel { flex:1; min-width:0; padding:10px 6px; border-radius:12px; border:1px solid var(--card-edge); background:#fff; font-family:var(--sans); font-size:14px; color:var(--text); outline:none; text-align:center; }
   .time-row .colon { color:var(--text-dim); flex-shrink:0; }
   .plan-body { flex:1; min-width:0; }
@@ -1093,8 +1099,9 @@
     <div class="modal-body">
       <p class="plan-sub">함께할 약속을 적어두면 둘 다 볼 수 있어요. 예매한 내역도 같이 적어두면 까먹지 않아요.</p>
       <div class="plan-form">
-        <input type="date" id="planDate" class="plan-date" />
-        <div class="plan-field-label">시간 <span class="opt">· 끝나는 시간은 비워둬도 돼요</span></div>
+        <div class="date-range-input"><input type="date" id="planDate" class="plan-date" /><span class="dr-tilde">~</span><input type="date" id="planEndDate" class="plan-date" /></div>
+        <div class="dr-hint">여러 날에 걸친 약속이면 끝나는 날도 골라요 (선택)</div>
+        <div class="plan-field-label" id="planTimeLabel">시간 <span class="opt">· 안 정했으면 비워둬도 돼요</span></div>
         <div class="row time-row">
           <select id="planTimeStartH" class="plan-tsel"><option value="">시</option></select>
           <span class="colon">:</span>
@@ -1115,7 +1122,7 @@
 
 <div class="overlay" id="addOverlay">
   <div class="modal" role="dialog" aria-modal="true">
-    <div class="modal-head"><h2 id="addTitle">오늘의 추억</h2><span class="draft-tag" id="draftTag"></span><span class="ver-tag" id="verTag">v102</span><button class="x" id="addClose" aria-label="닫기">×</button></div>
+    <div class="modal-head"><h2 id="addTitle">오늘의 추억</h2><span class="draft-tag" id="draftTag"></span><span class="ver-tag" id="verTag">v104</span><button class="x" id="addClose" aria-label="닫기">×</button></div>
     <div class="modal-body">
       <div class="field">
         <div class="photo-drop" id="photoDrop">📷 사진 더하기 (여러 장 가능, 선택)</div>
@@ -2469,9 +2476,15 @@ function renderCal() {
   $("calTitle").textContent = calYear + "년 " + (calMonth + 1) + "월";
   var grid = $("calGrid"); grid.innerHTML = "";
   ["일", "월", "화", "수", "목", "금", "토"].forEach(function (w, wi) { var h = document.createElement("div"); h.className = "cal-wd" + (wi === 0 ? " sun" : wi === 6 ? " sat" : ""); h.textContent = w; grid.appendChild(h); });
-  var memMap = {}, planMap = {}, planTitles = {};
+  var memMap = {}, planOn = {};
   memories.forEach(function (m) { if (m.date) memMap[m.date] = (memMap[m.date] || 0) + 1; });
-  planItems.forEach(function (pp) { if (pp.date) { planMap[pp.date] = (planMap[pp.date] || 0) + 1; if (!planTitles[pp.date]) planTitles[pp.date] = []; planTitles[pp.date].push(pp.title || "일정"); } });
+  /* 며칠에 걸친 일정은 걸쳐 있는 날마다 올린다 */
+  planItems.forEach(function (pp) {
+    eachPlanDate(pp, function (ds) {
+      if (!planOn[ds]) planOn[ds] = [];
+      planOn[ds].push({ p: pp, first: ds === pp.date });
+    });
+  });
   var first = new Date(calYear, calMonth, 1);
   var days = new Date(calYear, calMonth + 1, 0).getDate();
   var tds = todayStr();
@@ -2491,10 +2504,12 @@ function renderCal() {
       if (memMap[ds]) { var d1 = document.createElement("span"); d1.className = "dt dt-mem"; dots.appendChild(d1); }
       if (annivLabelFor(new Date(calYear, calMonth, dNum))) { var d3 = document.createElement("span"); d3.className = "dt dt-anv"; dots.appendChild(d3); }
       cell.appendChild(dots);
-      planItems.filter(function (pp) { return pp.date === ds; }).forEach(function (pp) {
-        var ev = document.createElement("div"); ev.className = "cal-ev";
-        ev.textContent = pp.title || "일정";
-        ev.title = pp.title || "일정";
+      (planOn[ds] || []).forEach(function (hit) {
+        var pp = hit.p;
+        var ev = document.createElement("div");
+        ev.className = "cal-ev" + (hit.first ? "" : " cont");
+        ev.textContent = hit.first ? (pp.title || "일정") : "↳ " + (pp.title || "일정");
+        ev.title = (pp.title || "일정") + (pp.endDate ? " (" + planDayCount(pp) + "일간)" : "");
         ev.onclick = function (e) { e.stopPropagation(); closeCal(); openPlan(); setTab("plan"); };
         cell.appendChild(ev);
       });
@@ -2518,10 +2533,23 @@ function renderCalDayList(ds) {
     it.onclick = function () { closeCal(); openDetail(m); };
     box.appendChild(it);
   });
-  var pls = planItems.filter(function (pp) { return pp.date === ds; });
+  var pls = planItems.filter(function (pp) {
+    if (!pp.date) return false;
+    if (!pp.endDate) return pp.date === ds;
+    return pp.date <= ds && ds <= pp.endDate;
+  });
   pls.forEach(function (pp) {
     var it2 = document.createElement("button"); it2.type = "button"; it2.className = "cal-item";
-    it2.innerHTML = "⏰ <span class=\"ci-t\">" + esc(pp.title || "일정") + "</span>" + (pp.time ? " · " + esc(fmtPlanRange(pp.time, pp.endTime)) : "");
+    var nDay = pp.endDate ? (Math.round((new Date(ds + "T00:00:00") - new Date(pp.date + "T00:00:00")) / 86400000) + 1) : 0;
+    it2.innerHTML = "⏰ <span class=\"ci-t\">" + esc(pp.title || "일정") + "</span>"
+      + (nDay ? ' <span class="ci-day">' + nDay + "/" + planDayCount(pp) + "일째</span>" : "")
+      + (function () {
+          if (!planHasTime(pp)) return "";
+          if (!pp.endDate) return " · " + esc(fmtPlanRange(pp.time, pp.endTime));
+          if (ds === pp.date && pp.time) return " · " + esc(fmtPlanTime(pp.time)) + " 시작";
+          if (ds === pp.endDate && pp.endTime) return " · " + esc(fmtPlanTime(pp.endTime)) + " 끝";
+          return "";
+        })();
     it2.onclick = function () { closeCal(); openPlan(); setTab("plan"); };
     box.appendChild(it2);
   });
@@ -3406,6 +3434,40 @@ function fmtPlanDate(s) {
   var wd = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
   return (+p[1]) + "월 " + (+p[2]) + "일 (" + wd + ")";
 }
+/* 며칠에 걸친 일정 — 끝나는 날까지가 '다가오는 약속' 이다 */
+function planLastDay(p) { return (p && p.endDate) ? p.endDate : (p && p.date) || ""; }
+function planDayCount(p) {
+  if (!p || !p.date || !p.endDate) return 1;
+  var a = new Date(p.date + "T00:00:00"), b = new Date(p.endDate + "T00:00:00");
+  if (isNaN(a) || isNaN(b)) return 1;
+  return Math.max(1, Math.round((b - a) / 86400000) + 1);
+}
+function eachPlanDate(p, cb) {
+  if (!p || !p.date) return;
+  var cur = new Date(p.date + "T00:00:00");
+  var end = p.endDate ? new Date(p.endDate + "T00:00:00") : new Date(p.date + "T00:00:00");
+  if (isNaN(cur) || isNaN(end) || end < cur) { cb(p.date); return; }
+  for (var g = 0; g < 400 && cur <= end; g++) {
+    cb(cur.getFullYear() + "-" + pad2(cur.getMonth() + 1) + "-" + pad2(cur.getDate()));
+    cur.setDate(cur.getDate() + 1);
+  }
+}
+/* 같은 달이면 '~ 6일 (일)', 달이 넘어가면 '~ 1월 2일 (토)' */
+function fmtPlanEndShort(start, end) {
+  if (!end) return "";
+  var a = start.split("-"), b = end.split("-");
+  if (a.length !== 3 || b.length !== 3) return fmtPlanDate(end);
+  var d = new Date(+b[0], +b[1] - 1, +b[2]);
+  var wd = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
+  if (a[0] === b[0] && a[1] === b[1]) return (+b[2]) + "일 (" + wd + ")";
+  return (+b[1]) + "월 " + (+b[2]) + "일 (" + wd + ")";
+}
+/* 예전엔 기본값이 00:00 이라 시간을 안 정해도 붙었다. 그건 미정으로 본다 */
+function planHasTime(p) {
+  if (!p || !p.time) return false;
+  if (p.time === "00:00" && !p.endTime) return false;
+  return true;
+}
 function fmtPlanTime(t) {
   if (!t) return "";
   var hm = t.split(":"); if (hm.length < 2) return t;
@@ -3416,17 +3478,36 @@ function fmtPlanRange(s, e) {
   return e ? fmtPlanTime(s) + " ~ " + fmtPlanTime(e) : fmtPlanTime(s);
 }
 function planRow(p, past) {
+  var n = planDayCount(p);
+  var endShort = p.endDate ? fmtPlanEndShort(p.date, p.endDate) : "";
+  var today = todayStr();
+  var onNow = !past && p.endDate && p.date <= today && today <= p.endDate;
+  var hasT = planHasTime(p);
+  var when;
+  if (endShort) {
+    /* 시작 시간은 첫날 밑에, 끝 시간은 끝나는 날 밑에 */
+    when = '<div class="d">' + esc(fmtPlanDate(p.date)) + '</div>'
+      + (hasT && p.time ? '<div class="t">' + esc(fmtPlanTime(p.time)) + '</div>' : '')
+      + '<div class="d2">~ ' + esc(endShort) + '</div>'
+      + (hasT && p.endTime ? '<div class="t">' + esc(fmtPlanTime(p.endTime)) + '</div>' : '');
+  } else {
+    when = '<div class="d">' + esc(fmtPlanDate(p.date)) + '</div>'
+      + (hasT ? '<div class="t">' + esc(fmtPlanRange(p.time, p.endTime)) + '</div>' : '');
+  }
   return '<div class="plan-item' + (past ? " past" : "") + '">' +
-    '<div class="plan-when"><div class="d">' + esc(fmtPlanDate(p.date)) + '</div>' + (p.time ? '<div class="t">' + esc(fmtPlanRange(p.time, p.endTime)) + '</div>' : '') + '</div>' +
-    '<div class="plan-body"><div class="plan-title">' + esc(p.title || "(제목 없음)") + '</div>' + (p.memo ? '<div class="plan-memo">' + esc(p.memo) + '</div>' : '') + '</div>' +
+    '<div class="plan-when">' + when + '</div>' +
+    '<div class="plan-body"><div class="plan-title">' + esc(p.title || "(제목 없음)") +
+      (n > 1 ? '<span class="plan-days">' + n + '일간</span>' : '') +
+      (onNow ? '<span class="plan-now">진행 중</span>' : '') + '</div>' +
+      (p.memo ? '<div class="plan-memo">' + esc(p.memo) + '</div>' : '') + '</div>' +
     '<div class="plan-acts"><button class="plan-edit" type="button" data-id="' + p.id + '" aria-label="수정">✎</button><button class="plan-del" type="button" data-id="' + p.id + '" aria-label="삭제">×</button></div></div>';
 }
 function renderPlan() {
   var wrap = $("planListWrap"); if (!wrap) return;
   if (!planItems.length) { wrap.innerHTML = '<div class="plan-empty">아직 등록된 일정이 없어요.<br>첫 데이트 약속을 적어보세요 📅</div>'; return; }
   var today = todayStr();
-  var upcoming = planItems.filter(function (p) { return (p.date || "") >= today; });
-  var past = planItems.filter(function (p) { return (p.date || "") < today; }).reverse();
+  var upcoming = planItems.filter(function (p) { return planLastDay(p) >= today; });
+  var past = planItems.filter(function (p) { return planLastDay(p) < today; }).reverse();
   var html = "";
   if (upcoming.length) html += '<div class="plan-section-label">다가오는 약속</div><div class="plan-list">' + upcoming.map(function (p) { return planRow(p, false); }).join("") + '</div>';
   if (past.length) html += '<div class="plan-section-label">지난 약속</div><div class="plan-list">' + past.map(function (p) { return planRow(p, true); }).join("") + '</div>';
@@ -3441,9 +3522,16 @@ function renderPlan() {
 function renderUpcomingPlan() {
   var box = $("upcomingPlan"); if (!box) return;
   var today = todayStr();
-  var next = planItems.filter(function (p) { return (p.date || "") >= today; })[0];
+  var next = planItems.filter(function (p) { return planLastDay(p) >= today; })[0];
   if (!next) { box.innerHTML = ""; return; }
-  var when = fmtPlanDate(next.date) + (next.time ? " " + fmtPlanRange(next.time, next.endTime) : "");
+  var hasT = planHasTime(next), when;
+  if (next.endDate) {
+    when = fmtPlanDate(next.date) + (hasT && next.time ? " " + fmtPlanTime(next.time) : "")
+      + " ~ " + fmtPlanEndShort(next.date, next.endDate)
+      + (hasT && next.endTime ? " " + fmtPlanTime(next.endTime) : "");
+  } else {
+    when = fmtPlanDate(next.date) + (hasT ? " " + fmtPlanRange(next.time, next.endTime) : "");
+  }
   box.innerHTML = '<div class="upcoming-plan" id="upcomingPlanCard"><span class="ic">📅</span><span class="tx">다가오는 데이트 · <b>' + esc(when) + '</b> · ' + esc(next.title || "") + '</span><span class="arr">›</span></div>';
   var card = $("upcomingPlanCard"); if (card) card.onclick = openPlan;
 }
@@ -3476,17 +3564,22 @@ async function addPlan() {
   var date = ($("planDate").value || "").trim();
   var ts = getTimeSel("planTimeStartH", "planTimeStartM");
   var te = getTimeSel("planTimeEndH", "planTimeEndM");
-  if (te && te === ts) te = "";
+  var hasRange = !!($("planEndDate").value || "").trim();
+  if (!hasRange && te && te === ts) te = "";
   var title = ($("planTitle").value || "").trim();
   var memo = ($("planMemo").value || "").trim();
+  var endDate = ($("planEndDate").value || "").trim();
   if (!date) { toast("날짜를 골라주세요."); return; }
   if (!title) { toast("무엇을 할지 적어주세요."); return; }
+  /* 끝나는 날을 앞으로 골랐으면 서로 바꿔준다 */
+  if (endDate && endDate < date) { var tmp = date; date = endDate; endDate = tmp; }
+  if (endDate === date) endDate = "";
   try {
     if (editingPlanId) {
-      await updateDoc(doc(db, PLAN_COL, editingPlanId), { date: date, time: ts, endTime: te, title: title, memo: memo });
+      await updateDoc(doc(db, PLAN_COL, editingPlanId), { date: date, endDate: endDate, time: ts, endTime: te, title: title, memo: memo });
       toast("일정을 수정했어요.");
     } else {
-      await addDoc(collection(db, PLAN_COL), { date: date, time: ts, endTime: te, title: title, memo: memo, createdAt: Date.now() });
+      await addDoc(collection(db, PLAN_COL), { date: date, endDate: endDate, time: ts, endTime: te, title: title, memo: memo, createdAt: Date.now() });
     }
     resetPlanForm();
   } catch (e) { toast(editingPlanId ? "수정하지 못했어요." : "추가하지 못했어요."); }
@@ -3494,19 +3587,29 @@ async function addPlan() {
 function editPlan(it) {
   editingPlanId = it.id;
   $("planDate").value = it.date || "";
+  $("planEndDate").value = it.endDate || "";
   setTimeSel("planTimeStartH", "planTimeStartM", it.time || "");
   setTimeSel("planTimeEndH", "planTimeEndM", it.endTime || "");
   $("planTitle").value = it.title || "";
   $("planMemo").value = it.memo || "";
+  updatePlanTimeLabel();
   $("planAddBtn").textContent = "수정 완료";
   var form = document.querySelector(".plan-form"); if (form) form.scrollIntoView({ behavior: "smooth", block: "start" });
 }
+function updatePlanTimeLabel() {
+  var lb = $("planTimeLabel"); if (!lb) return;
+  var hasRange = !!($("planEndDate").value || "").trim();
+  lb.innerHTML = hasRange
+    ? '시간 <span class="opt">· 첫날 시작 시간 ~ 끝나는 날 시간</span>'
+    : '시간 <span class="opt">· 안 정했으면 비워둬도 돼요</span>';
+}
 function resetPlanForm() {
   editingPlanId = null;
-  $("planDate").value = "";
-  setTimeSel("planTimeStartH", "planTimeStartM", "00:00"); setTimeSel("planTimeEndH", "planTimeEndM", "00:00");
+  $("planDate").value = ""; $("planEndDate").value = "";
+  setTimeSel("planTimeStartH", "planTimeStartM", ""); setTimeSel("planTimeEndH", "planTimeEndM", "");
   $("planTitle").value = ""; $("planMemo").value = "";
   $("planAddBtn").textContent = "일정 추가";
+  updatePlanTimeLabel();
 }
 async function delPlan(it) {
   if (!confirm("이 일정을 지울까요?")) return;
@@ -4574,7 +4677,7 @@ function init() {
   $("bucketInput").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); addBucket(); } });
   $("bucketOverlay").addEventListener("mousedown", function (e) { if (e.target === this) closeBucket(); });
   fillTimeSelects();
-  setTimeSel("planTimeStartH", "planTimeStartM", "00:00"); setTimeSel("planTimeEndH", "planTimeEndM", "00:00");
+  setTimeSel("planTimeStartH", "planTimeStartM", ""); setTimeSel("planTimeEndH", "planTimeEndM", "");
   buildBucketCats();
   buildBucketFilter();
   $("annivBtn").onclick = function () { closeMore(); openAnniv(); };
@@ -4589,6 +4692,9 @@ function init() {
   $("annivOverlay").addEventListener("click", function (e) { if (e.target === this) closeAnniv(); });
   $("planClose").onclick = closePlan;
   $("planAddBtn").onclick = addPlan;
+  /* 며칠짜리를 고르면 두 시간이 '첫날·끝나는 날' 의 것이 된다 */
+  $("planEndDate").addEventListener("change", updatePlanTimeLabel);
+  $("planDate").addEventListener("change", updatePlanTimeLabel);
   $("planTitle").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); addPlan(); } });
   $("planOverlay").addEventListener("mousedown", function (e) { if (e.target === this) closePlan(); });
   $("galleryBtn").onclick = function () { closeMore(); openGallery(); };
