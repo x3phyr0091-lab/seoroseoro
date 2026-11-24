@@ -1122,7 +1122,7 @@
 
 <div class="overlay" id="addOverlay">
   <div class="modal" role="dialog" aria-modal="true">
-    <div class="modal-head"><h2 id="addTitle">오늘의 추억</h2><span class="draft-tag" id="draftTag"></span><span class="ver-tag" id="verTag">v104</span><button class="x" id="addClose" aria-label="닫기">×</button></div>
+    <div class="modal-head"><h2 id="addTitle">오늘의 추억</h2><span class="draft-tag" id="draftTag"></span><span class="ver-tag" id="verTag">v105</span><button class="x" id="addClose" aria-label="닫기">×</button></div>
     <div class="modal-body">
       <div class="field">
         <div class="photo-drop" id="photoDrop">📷 사진 더하기 (여러 장 가능, 선택)</div>
@@ -1520,6 +1520,7 @@ function enterMain() {
   if (me) { draftAuthor = me; commentAuthor = me; }
   subscribeBucket();           /* 버킷 변화도 새 소식에 들어가므로 미리 구독 */
   subscribeReviews();          /* 감상 기록도 마찬가지 */
+  subscribeDrafts();           /* 쓰던 글을 다른 기기에서도 이어 쓸 수 있게 */
   $("ddayNum").innerHTML = daysTogether().toLocaleString() + ' <small>일째</small>';
   $("milestoneEl").textContent = nextMilestone();
   buildAuthorPicker();
@@ -1859,13 +1860,7 @@ function openAdd(editMem) {
     ["memTitle", "memContent"].forEach(function (id) { var c = $(id); c.style.fontFamily = ""; c.style.fontSize = ""; });
     draftPhotos = []; draftMoods = []; draftAuthor = null; draftCoverIdx = 0; draftSel = []; lastPickIdx = -1; draftOrigCover = null; draftOrigCoverId = null;
     renderPhotoGrid(); $("photoDrop").textContent = dropLabel();
-    var d = getDraft();
-    if (d && !d.editingId) {
-      var when = fmtWriteTime ? fmtWriteTime(d.savedAt) : "";
-      if (confirm("이어서 쓰던 임시저장 글이 있어요" + (when ? " (" + when + ")" : "") + ".\n불러올까요?")) {
-        applyDraftToForm(d);
-      } else { clearDraft(); }
-    }
+    if (!offerDraft()) draftPending = true;   /* 서버에서 아직 안 왔으면 오는 대로 다시 묻는다 */
   }
   $("photoInput").value = "";
   if ($("charPalette")) $("charPalette").style.display = "none";
@@ -1876,10 +1871,41 @@ function openAdd(editMem) {
   for (var i = 0; i < auths.length; i++) auths[i].classList.toggle("sel", !!draftAuthor && auths[i].textContent === draftAuthor);
   $("addOverlay").classList.add("active"); document.body.style.overflow = "hidden";
 }
-function closeAdd() { $("addOverlay").classList.remove("active"); document.body.style.overflow = ""; $("globalClose").classList.remove("on"); }
+function closeAdd() { draftPending = false; $("addOverlay").classList.remove("active"); document.body.style.overflow = ""; $("globalClose").classList.remove("on"); }
 
 var DRAFT_KEY = "mem_draft_v1";
-var draftSaveTimer = null;
+var DRAFT_DOC = ["settings", "drafts"];
+var draftSaveTimer = null, draftServerTimer = null;
+var draftDoc = {}, draftUnsub = null, draftLoaded = false, lastPushedDraft = "";
+var DRAFT_MAX = 400000;   /* 바이트. 한 문서에 두 사람 몫이 들어가므로 1MB 한도에 여유를 둔다 */
+/* 한글은 한 글자가 3바이트라 글자 수로 재면 한참 모자라게 잡힌다 */
+function byteLen(str) {
+  try { return new TextEncoder().encode(str).length; } catch (e) {}
+  var n = 0;
+  for (var i = 0; i < str.length; i++) { var c = str.charCodeAt(i); n += c < 128 ? 1 : c < 2048 ? 2 : 3; }
+  return n;
+}
+
+/* 이 기기를 알아보는 표시 — '다른 기기에서 쓰던 글' 안내에 쓴다 */
+function deviceId() {
+  var k = "device_id";
+  try {
+    var v = localStorage.getItem(k);
+    if (!v) { v = "d" + Math.random().toString(36).slice(2, 9); localStorage.setItem(k, v); }
+    return v;
+  } catch (e) { return "d0"; }
+}
+function draftKey() { return meKey() === "u2" ? "d2" : "d1"; }
+function subscribeDrafts() {
+  if (draftUnsub) return;
+  try {
+    draftUnsub = onSnapshot(doc(db, DRAFT_DOC[0], DRAFT_DOC[1]), function (snap) {
+      draftDoc = (snap && snap.exists() ? snap.data() : null) || {};
+      draftLoaded = true;
+      if (draftPending && $("addOverlay").classList.contains("active") && !editingId && formLooksUntouched()) offerDraft();
+    }, function () { draftLoaded = true; });
+  } catch (e) {}
+}
 function draftSnapshot() {
   return {
     editingId: editingId,
@@ -1887,22 +1913,87 @@ function draftSnapshot() {
     place: $("memPlace").value, pw: $("memPw").value,
     title: $("memTitle").innerHTML, content: $("memContent").innerHTML,
     moods: draftMoods.slice(), author: draftAuthor,
-    savedAt: Date.now()
+    savedAt: Date.now(), dev: deviceId()
   };
+}
+function draftIsEmpty(s) {
+  return !s.title.trim() && !stripTags(s.content).trim() && !s.place.trim() && !s.moods.length;
+}
+/* 서버에도 올려서 다른 기기에서 이어 쓸 수 있게 한다 */
+function pushDraftToServer(s) {
+  if (byteLen(JSON.stringify(s)) > DRAFT_MAX) return "toobig";
+  var cmp = JSON.stringify([s.title, s.content, s.date, s.endDate, s.place, s.moods, s.author, s.editingId]);
+  if (cmp === lastPushedDraft) return "same";   /* 바뀐 게 없으면 올리지 않는다 */
+  lastPushedDraft = cmp;
+  var f = {}; f[draftKey()] = s;
+  try { setDoc(doc(db, DRAFT_DOC[0], DRAFT_DOC[1]), f, { merge: true }); } catch (e) { return "fail"; }
+  return "ok";
 }
 function scheduleDraftSave() {
   clearTimeout(draftSaveTimer);
   draftSaveTimer = setTimeout(function () {
     var s = draftSnapshot();
-    var empty = !s.title.trim() && !stripTags(s.content).trim() && !s.place.trim() && !s.moods.length;
-    if (empty && !editingId) { clearDraft(); return; }
-    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(s)); showDraftSavedTag(); } catch (e) {}
+    if (draftIsEmpty(s) && !editingId) { clearDraft(); return; }
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(s)); } catch (e) {}
+    showDraftSavedTag();
+    /* 서버 쓰기는 좀 더 느긋하게 — 글자마다 올리지 않는다 */
+    clearTimeout(draftServerTimer);
+    draftServerTimer = setTimeout(function () {
+      if (pushDraftToServer(s) === "toobig") showDraftSavedTag("💾 이 기기에만 저장됨");
+    }, 2500);
   }, 600);
 }
-function clearDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch (e) {} $("draftTag").classList.remove("show"); }
-function getDraft() { try { var s = localStorage.getItem(DRAFT_KEY); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
-function showDraftSavedTag() {
-  var t = $("draftTag"); t.textContent = "💾 임시저장됨"; t.classList.add("show");
+function saveDraftNow() {
+  clearTimeout(draftSaveTimer); clearTimeout(draftServerTimer);
+  var s = draftSnapshot();
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify(s)); } catch (e) {}
+  lastPushedDraft = "";
+  var r = pushDraftToServer(s);
+  showDraftSavedTag(r === "toobig" ? "💾 이 기기에만 저장됨" : null);
+}
+function clearDraft() {
+  clearTimeout(draftSaveTimer); clearTimeout(draftServerTimer);
+  lastPushedDraft = "";
+  try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+  /* 서버에 올려둔 게 있을 때만 지운다 — 빈 화면에서 반복 호출되므로 */
+  if (draftDoc[draftKey()]) {
+    draftDoc[draftKey()] = null;
+    var f = {}; f[draftKey()] = null;
+    try { setDoc(doc(db, DRAFT_DOC[0], DRAFT_DOC[1]), f, { merge: true }); } catch (e) {}
+  }
+  $("draftTag").classList.remove("show");
+}
+/* 이 기기 것과 서버 것 중 더 최근 것을 쓴다 */
+function getDraft() {
+  var local = null, server = null;
+  try { var t = localStorage.getItem(DRAFT_KEY); if (t) local = JSON.parse(t); } catch (e) {}
+  var sv = draftDoc[draftKey()];
+  if (sv && typeof sv === "object") server = sv;
+  if (!local) return server;
+  if (!server) return local;
+  return (server.savedAt || 0) > (local.savedAt || 0) ? server : local;
+}
+var draftPending = false;
+function offerDraft() {
+  var d = getDraft();
+  if (!d || d.editingId) return !!draftLoaded;   /* 없으면: 다 받아봤으면 끝, 아니면 기다린다 */
+  draftPending = false;
+  var when = fmtWriteTime ? fmtWriteTime(d.savedAt) : "";
+  var other = d.dev && d.dev !== deviceId() ? "다른 기기에서 " : "";
+  if (confirm(other + "이어서 쓰던 임시저장 글이 있어요" + (when ? " (" + when + ")" : "") + ".\n불러올까요?")) {
+    applyDraftToForm(d);
+  } else { clearDraft(); }
+  return true;
+}
+/* 쓰던 흔적이 없는 빈 화면일 때만 뒤늦게 물어본다 */
+function formLooksUntouched() {
+  return !($("memTitle").textContent || "").trim()
+    && !($("memContent").textContent || "").trim()
+    && !($("memPlace").value || "").trim()
+    && !draftMoods.length && !draftPhotos.length;
+}
+function showDraftSavedTag(msg) {
+  var t = $("draftTag"); t.textContent = msg || "💾 임시저장됨"; t.classList.add("show");
   clearTimeout(t._hideT); t._hideT = setTimeout(function () { t.classList.remove("show"); }, 1600);
 }
 function applyDraftToForm(d) {
@@ -4360,7 +4451,7 @@ function init() {
   $("openAddBtn").onclick = openAdd;
   $("addClose").onclick = closeAdd;
   $("saveBtn").onclick = saveMemory;
-  $("draftSaveBtn").onclick = function () { clearTimeout(draftSaveTimer); try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draftSnapshot())); showDraftSavedTag(); } catch (e) {} };
+  $("draftSaveBtn").onclick = saveDraftNow;
   ["memTitle", "memContent", "memPlace", "memDate", "memEndDate", "memPw"].forEach(function (id) {
     var el = $(id);
     if (el) el.addEventListener("input", scheduleDraftSave);
